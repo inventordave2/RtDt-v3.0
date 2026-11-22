@@ -21,6 +21,8 @@ var rtdt_ui_browser = (function () {
     var playback_fps = 24;
     var export_active = false;
     var export_cancelled = false;
+    var pack_fps_override = null;
+    var pack_zip_filename = null;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -177,7 +179,7 @@ var rtdt_ui_browser = (function () {
         var depth = Number(element('renderQuality').value);
         var start = Number(element('phyExportStart').value);
         var end = Number(element('phyExportEnd').value);
-        var fps = phy_model.timeline && phy_model.timeline.fps || 24;
+        var fps = pack_fps_override || (phy_model.timeline && phy_model.timeline.fps) || 24;
         var destination = element('phyExportDestination').value;
         if (!Number.isInteger(depth) || depth < 1 || depth > 20) {
 
@@ -198,7 +200,7 @@ var rtdt_ui_browser = (function () {
                 throw new Error('Connect your '+destination+' account before exporting');
             // Ask for local folder permission from this user gesture when needed.
             sink = await rtdt_animation_storage_browser.create(destination,
-                element('phyCloudFolder').value.trim());
+                element('phyCloudFolder').value.trim(),pack_zip_filename);
             if (running || playback_active || !scene_loaded)
                 throw new Error('Scene changed while selecting an output destination');
             export_active = true;
@@ -321,10 +323,69 @@ var rtdt_ui_browser = (function () {
         element('sceneBuiltInGroup').style.display = source === 'built-in' ? 'block' : 'none';
         element('sceneRepoGroup').style.display = source === 'repo' ? 'block' : 'none';
         element('sceneLocalGroup').style.display = source === 'local' ? 'block' : 'none';
-        element('btnLoadScene').textContent = source === 'local' ? 'Load my .scene file' :
+        element('scenePackGroup').style.display = source === 'pack' ? 'block' : 'none';
+        element('btnLoadScene').textContent = source === 'pack' ? 'Load RtDt pack' :
+            source === 'local' ? 'Load my .scene file' :
             (source === 'repo' ? 'Load repository scene' : 'Load built-in scene');
         if (!scene_loaded)
             show_scene_assets([], 'Load a scene to inspect its mesh, texture and animation dependencies.');
+    }
+
+    function set_pack_source() {
+
+        var local = element('packSource').value === 'local';
+        element('packRepoGroup').style.display = local ? 'none' : 'block';
+        element('packLocalGroup').style.display = local ? 'block' : 'none';
+    }
+
+    async function load_pack() {
+
+        if (running || playback_active || export_active)
+            throw new Error('Stop rendering and animation playback before opening a pack');
+        var isLocal = element('packSource').value === 'local';
+        status('packStatus','Validating .rdt manifest and dependencies…','info');
+        var source = isLocal ?
+            await rtdt_pack_browser.load_local(element('packLocalFiles').files) :
+            await rtdt_pack_browser.load_hosted(element('packRepoSelect').value);
+        var pack = source.pack;
+        set_resolution(pack.render.width,pack.render.height);
+        element('renderQuality').value = String(pack.render.quality);
+        // Use the existing, validated scene construction and AetherOre paths.
+        var ok = await use_scene_source(source.sceneText,source.scenePath,
+            source.localFiles);
+        if (!ok) throw new Error('Pack scene could not be loaded');
+        if (source.phyText !== null)
+            use_phy_source(source.phyText,pack.phy);
+        pack_fps_override = pack.render.fps || null;
+        pack_zip_filename = pack.output.destination === 'zip' ?
+            pack.output.path.split('/').pop() : null;
+        if (pack.render.frames) {
+
+            if (!phy_model)
+                throw new Error('Pack frame range requires an AetherOre .phy animation');
+            element('phyExportStart').value = String(pack.render.frames.start);
+            element('phyExportEnd').value = String(pack.render.frames.end);
+            element('phyExportDestination').value = pack.output.destination;
+            if (['google-drive','dropbox','onedrive'].indexOf(pack.output.destination)>=0)
+                element('phyCloudFolder').value = pack.output.path;
+            cloud_destination_changed();
+            var timeline = element('phyBatchTools').closest('.rtdt-animation-tools');
+            if (timeline) timeline.open = true;
+            element('phyBatchTools').open = true;
+        } else {
+
+            element('exportFormat').value =
+                pack.output.format === 'jpg' ? 'jpeg' : pack.output.format;
+        }
+        var message = 'RtDt pack loaded: '+(pack.name || pack.scene)+
+            (pack.render.frames ? ' · '+(pack.render.frames.end -
+                pack.render.frames.start+1)+' frames ready to export' :
+                ' · single-image render ready');
+        if (source.warnings.length)
+            message += ' · '+source.warnings.length+' optional asset warning(s)';
+        status('packStatus',message,'success');
+        status('mainStatus',message,'success');
+        return true;
     }
 
     function scene_assets(model) {
@@ -428,6 +489,14 @@ var rtdt_ui_browser = (function () {
     function load_selected_scene() {
         var source = element('sceneSource').value;
         if (source === 'built-in') { load_scene(); return Promise.resolve(scene_loaded); }
+        if (source === 'pack') return load_pack().catch(function (error) {
+
+            status('packStatus','Pack failed: '+error.message,'error');
+            status('sceneStatus','Pack failed: '+error.message,'error');
+            return false;
+        });
+        pack_fps_override = null;
+        pack_zip_filename = null;
         if (running) {
             status('sceneStatus', 'Stop rendering before changing scene.', 'error');
             return Promise.resolve(false);
@@ -1469,6 +1538,8 @@ var rtdt_ui_browser = (function () {
         set_scene_source();
         bind('btnLoadScene', 'click', load_selected_scene);
         bind('sceneSource', 'change', set_scene_source);
+        bind('packSource','change',set_pack_source);
+        set_pack_source();
         bind('btnAssetMesh', 'click', function () { open_import('obj', element('assetDefaultSource').value); });
         bind('btnAssetTexture', 'click', function () { open_import('image', element('assetDefaultSource').value); });
         bind('btnOpenImport', 'click', function () { open_import('scene','repo'); });
