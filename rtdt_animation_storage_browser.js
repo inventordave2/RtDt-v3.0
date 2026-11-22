@@ -13,10 +13,11 @@ var rtdt_animation_storage_browser = (function () {
         setTimeout(function () { URL.revokeObjectURL(url); },15000);
     }
 
-    async function create(kind) {
+    async function create(kind,remotePath) {
 
-        if (kind !== 'zip' && kind !== 'folder')
-            throw new Error('Only ZIP and local-folder destinations are available');
+        var cloud = ['google-drive','dropbox','onedrive'].indexOf(kind) >= 0;
+        if (kind !== 'zip' && kind !== 'folder' && !cloud)
+            throw new Error('Unknown animation output destination');
         var directory = null;
         if (kind === 'folder') {
 
@@ -24,14 +25,17 @@ var rtdt_animation_storage_browser = (function () {
                 throw new Error('Direct folder export needs a Chromium browser on HTTPS or localhost. Choose ZIP instead.');
             directory = await window.showDirectoryPicker({mode:'readwrite'});
         }
+        var writer = cloud ? await rtdt_cloud_storage.create_writer(kind,
+            remotePath || 'RtDt/Animation',rtdt_cloud_auth_browser.get_access_token) : null;
         return rtdt_animation_destination.create({
-            kind:kind,
+            kind:cloud ? 'folder' : kind,
             output_archive:function (bytes) {
 
                 download(bytes,'rtdt-animation.zip');
             },
             write_file:async function (name,bytes) {
 
+                if (cloud) return writer(name,bytes);
                 var handle = await directory.getFileHandle(name,{create:true});
                 var stream = await handle.createWritable();
                 try {
