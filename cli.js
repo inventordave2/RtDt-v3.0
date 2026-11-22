@@ -117,6 +117,8 @@ const cliConfig = {
 
 	sceneName: 'scene1',
     sceneFile: null,
+    jobFile: null,
+    batchFps: null,
 	width: 500,
 	height: 281,
 	outputFile: 'render.png',
@@ -149,6 +151,7 @@ USAGE:
 OPTIONS:
   --scene NAME        Built-in scene name (default: scene1)
   --scene-file FILE   JSON/YAML v1 .scene/.scene.yaml file and assets
+  --job FILE          Execute a validated .rdt v1 pack manifest
   --lint-pack FILE   Validate a .rdt pack and all referenced files without rendering
   --phy FILE          Load .phy animation file (JSON version 1)
   --time SECONDS      Evaluate .phy at time t
@@ -259,6 +262,12 @@ function parseArguments(argv) {
                 cliConfig.sceneFile = cliConfig.sceneName;
             }
 		}
+        else if (arg === '--job') {
+
+            if (i + 1 >= argv.length)
+                throw new Error('--job requires a .rdt filename');
+            cliConfig.jobFile = argv[++i];
+        }
         else if (arg === '--batch') {
 
             cliConfig.batch = true;
@@ -401,6 +410,41 @@ function parseArguments(argv) {
 	}
 }
 
+function configure_job() {
+
+    if (!cliConfig.jobFile) return;
+    var report = require('./rtdt_pack_lint_node').lint_file(cliConfig.jobFile);
+    if (!report.valid)
+        throw new Error('Invalid .rdt pack: '+report.errors.join('; '));
+    var pack = report.pack;
+    var base = path.dirname(path.resolve(cliConfig.jobFile));
+    cliConfig.sceneFile = path.join(base,pack.scene);
+    cliConfig.phyFile = pack.phy ? path.join(base,pack.phy) : null;
+    cliConfig.width = pack.render.width;
+    cliConfig.height = pack.render.height;
+    cliConfig.quality = pack.render.quality;
+    cliConfig.batchFps = pack.render.fps || null;
+    cliConfig.batch = !!pack.render.frames;
+    cliConfig.format = pack.output.format;
+    if (cliConfig.batch) {
+
+        cliConfig.startFrame = pack.render.frames.start;
+        cliConfig.endFrame = pack.render.frames.end;
+        cliConfig.destination = pack.output.destination;
+        if (pack.output.destination === 'zip')
+            cliConfig.zipFile = path.join(base,pack.output.path);
+        else if (['google-drive','dropbox','onedrive'].includes(pack.output.destination))
+            cliConfig.outputDir = pack.output.path;
+        else
+            cliConfig.outputDir = path.join(base,pack.output.path);
+    } else {
+
+        cliConfig.outputFile = path.join(base,pack.output.path);
+        cliConfig.outputExplicit = true;
+    }
+    log('RtDt pack: '+(pack.name || path.basename(cliConfig.jobFile)));
+}
+
 function log(message) {
 
 	if (cliConfig.verbose) {
@@ -492,7 +536,7 @@ async function renderScene() {
                 throw new Error('--batch requires a scene animation or --phy FILE');
             if (cliConfig.phyFrame !== null || cliConfig.phyTime !== null)
                 throw new Error('Batch range uses --start-frame and --end-frame, not --time/--frame');
-            var frameRate = batchModel.timeline && batchModel.timeline.fps || 24;
+            var frameRate = cliConfig.batchFps || (batchModel.timeline && batchModel.timeline.fps) || 24;
             var endFrame = cliConfig.endFrame === null ?
                 Math.round((batchModel.timeline && batchModel.timeline.duration || 0) * frameRate) - 1 :
                 cliConfig.endFrame;
@@ -608,6 +652,9 @@ async function main() {
             return;
         }
 		parseArguments(process.argv);
+        if (cliConfig.jobFile && process.argv.length !== 4)
+            throw new Error('--job cannot be combined with other render options; edit the manifest instead');
+        configure_job();
 		await renderScene();
 		process.exit(0);
 	} catch (e) {
