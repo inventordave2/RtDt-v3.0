@@ -75,7 +75,7 @@ var rtdt_ui_browser = (function () {
             phy_animator.at(t);
             pixels=null;
             playback_status('Rendering frame '+(playback_frame+1)+' / '+
-                (playback_total+1)+' at '+t.toFixed(3)+'s','info');
+                playback_total+' at '+t.toFixed(3)+'s','info');
             start_render();
             if (!running) throw new Error('Frame render did not start');
         } catch (error) {
@@ -112,6 +112,11 @@ var rtdt_ui_browser = (function () {
         var provider = element('phyExportDestination').value;
         var isCloud = ['google-drive','dropbox','onedrive'].indexOf(provider) >= 0;
         element('phyCloudSettings').style.display = isCloud ? 'block' : 'none';
+        if (provider === 'google-drive')
+            rtdt_cloud_auth_browser.preload_google().catch(function (error) {
+
+                status('phyCloudStatus','Google sign-in library unavailable: '+error.message,'error');
+            });
         if (isCloud) {
 
             status('phyCloudStatus',rtdt_cloud_auth_browser.connected(provider) ?
@@ -1114,7 +1119,7 @@ var rtdt_ui_browser = (function () {
         if (mode === 'success') workflow(3);
         if (playback_active) {
             if (mode !== 'success') stop_animation(false);
-            else if (playback_frame < playback_total) {
+            else if (playback_frame + 1 < playback_total) {
                 playback_frame++;
                 setTimeout(render_animation_frame,0);
             } else stop_animation(true);
