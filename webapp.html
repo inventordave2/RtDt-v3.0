@@ -938,6 +938,7 @@
                         <option value="repo" selected>RtDt repository · featured scenes</option>
                         <option value="built-in">Built-in scenes</option>
                         <option value="local">My computer</option>
+                        <option value="pack">RtDt pack (.rdt)</option>
                     </select>
                 </div>
                 <div id="sceneBuiltInGroup" class="control-group" style="display:none">
@@ -971,6 +972,25 @@
                     <label for="sceneLocalAssets">Associated files (OBJ, texture, .phy)</label>
                     <input type="file" id="sceneLocalAssets" multiple accept=".obj,.phy,.png,.jpg,.jpeg,.bmp,.ppm"><div id="sceneLocalAssetsName" class="rtdt-selected-filename" role="status" aria-live="polite">No asset files selected</div>
                     <p class="rtdt-caption">Choose any files listed in the scene configuration. Browsers cannot automatically read neighbouring local files without permission.</p>
+                </div>
+                <div id="scenePackGroup" class="control-group" style="display:none">
+                    <label for="packSource">Pack source</label>
+                    <select id="packSource">
+                        <option value="repo">Featured .rdt pack</option>
+                        <option value="local">My local pack folder</option>
+                    </select>
+                    <div id="packRepoGroup">
+                        <label for="packRepoSelect">Featured pack</label>
+                        <select id="packRepoSelect">
+                            <option value="samples/orbit.rdt">Orbit Studio · 192-frame .rdt</option>
+                        </select>
+                    </div>
+                    <div id="packLocalGroup" style="display:none">
+                        <label for="packLocalFiles">Select a pack folder containing one root .rdt manifest</label>
+                        <input type="file" id="packLocalFiles" webkitdirectory directory multiple>
+                        <p class="rtdt-caption">Choose the whole pack folder to grant access to its scene, .phy, meshes and textures. This does not upload any files.</p>
+                    </div>
+                    <p id="packStatus" class="status" role="status" aria-live="polite" style="display:none;"></p>
                 </div>
                 <button id="btnLoadScene" class="rtdt-action-primary" type="button">Load scene</button>
                 <div id="sceneDependencies" class="rtdt-dependencies" aria-live="polite">
@@ -1235,6 +1255,8 @@
 <script src="rtdt_scene_assets.js"></script>
 <script src="rtdt_scene_format.js"></script>
 <script src="rtdt_scene_browser.js"></script>
+<script src="rtdt_pack.js"></script>
+<script src="rtdt_pack_browser.js"></script>
 <script src="rtdt_png.js"></script>
 <script src="rtdt_animation_export.js"></script>
 <script src="rtdt_animation_destination.js"></script>
@@ -1242,6 +1264,6 @@
 <script src="rtdt_cloud_storage.js"></script>
 <script src="rtdt_cloud_auth_browser.js"></script>
 <script src="rtdt_animation_storage_browser.js"></script>
-<script src="rtdt_ui_browser_20261118.js?v=cloud-export-20261122"></script>
+<script src="rtdt_ui_browser_20261118.js?v=rdt-pack-20261122"></script>
 </body>
 </html>
