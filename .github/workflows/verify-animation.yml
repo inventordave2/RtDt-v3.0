@@ -1,0 +1,149 @@
+name: Verify AetherOre 192-frame animation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/verify-animation.yml'
+      - 'cli.js'
+      - 'rtdt_aetherore.js'
+      - 'rtdt_render_core.js'
+      - 'rtdt_scene_format.js'
+      - 'rtdt_scene_browser.js'
+      - 'samples/orbit.scene'
+      - 'samples/orbit/orbit-formula.phy'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-animation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-animation:
+    name: Render and verify 192 frames
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      FRAME_COUNT: '192'
+      FRAME_RATE: '24'
+      RENDER_WIDTH: '160'
+      RENDER_HEIGHT: '90'
+      OUTPUT_DIR: renders/orbit
+    steps:
+      - name: Checkout current revision
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install declared dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate formula physics and CLI startup
+        run: |
+          node --check cli.js
+          node tests/aetherore-formula.test.js
+          node cli.js --help > /dev/null
+
+      - name: Render complete sequence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUTPUT_DIR"
+          echo "Revision: $GITHUB_SHA"
+          echo "Rendering $FRAME_COUNT frames at $FRAME_RATE FPS"
+          for ((frame=0; frame<FRAME_COUNT; frame++)); do
+            printf -v number '%04d' "$frame"
+            node cli.js \
+              --scene-file samples/orbit.scene \
+              --phy samples/orbit/orbit-formula.phy \
+              --frame "$frame" \
+              --width "$RENDER_WIDTH" \
+              --height "$RENDER_HEIGHT" \
+              --output "$OUTPUT_DIR/frame-$number.png" > "$RUNNER_TEMP/rtdt-render.log" 2>&1 || {
+                echo "::error title=RtDt render failed::Frame $frame failed"
+                cat "$RUNNER_TEMP/rtdt-render.log"
+                exit 1
+              }
+            if (( frame % 24 == 0 || frame == FRAME_COUNT - 1 )); then
+              echo "Rendered frame $frame / $((FRAME_COUNT - 1))"
+            fi
+          done
+
+      - name: Validate every PNG and verify changing image content
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const assert = require('node:assert/strict');
+          const { PNG } = require('pngjs');
+          const dir = process.env.OUTPUT_DIR;
+          const count = Number(process.env.FRAME_COUNT);
+          const fps = Number(process.env.FRAME_RATE);
+          const width = Number(process.env.RENDER_WIDTH);
+          const height = Number(process.env.RENDER_HEIGHT);
+          const names = fs.readdirSync(dir).filter(name => name.endsWith('.png')).sort();
+          assert.equal(names.length, count, 'Expected exactly 192 PNG files');
+          const distinct = new Set();
+          const frames = [];
+          let first = null;
+          let changed = 0;
+          for (let frame = 0; frame < count; frame++) {
+
+              const name = 'frame-' + String(frame).padStart(4, '0') + '.png';
+              assert.equal(names[frame], name, 'Missing or misnumbered frame');
+              const buffer = fs.readFileSync(path.join(dir, name));
+              const png = PNG.sync.read(buffer, {checkCRC:true});
+              assert.equal(png.width, width, name + ': width');
+              assert.equal(png.height, height, name + ': height');
+              assert.equal(png.data.length, width * height * 4, name + ': pixel buffer');
+              const hash = crypto.createHash('sha256').update(png.data).digest('hex');
+              distinct.add(hash);
+              if (first === null) first = hash;
+              if (hash !== first) changed++;
+              frames.push({frame, filename:name, timeSeconds:frame/fps,
+                  pixelSha256:hash, bytes:buffer.length});
+          }
+          assert.ok(distinct.size >= 3,
+              'Only ' + distinct.size + ' unique frames; animation is not changing enough');
+          assert.ok(changed >= count / 4,
+              'Most images are identical to first frame; motion may not be applied');
+          const result = {revision:process.env.GITHUB_SHA, frameCount:count,
+              fps, width, height, uniqueFrames:distinct.size, frames};
+          fs.writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(result,null,2)+'\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              '### AetherOre verified render\n\n' +
+              '- Commit: ' + process.env.GITHUB_SHA + '\n' +
+              '- Frames: ' + count + ' (0000–0191)\n' +
+              '- Frame size: ' + width + ' × ' + height + '\n' +
+              '- FPS: ' + fps + '\n' +
+              '- Unique pixel frames: ' + distinct.size + '\n');
+          console.log('Checked ' + count + ' PNG images; ' + distinct.size + ' unique pixel frames.');
+          NODE
+
+      - name: Encode and verify MP4 preview
+        run: |
+          ffmpeg -hide_banner -loglevel error -y -framerate "$FRAME_RATE" \
+            -i "$OUTPUT_DIR/frame-%04d.png" \
+            -c:v libx264 -pix_fmt yuv420p -movflags +faststart \
+            renders/orbit-animation.mp4
+          test -s renders/orbit-animation.mp4
+          ffprobe -v error -select_streams v:0 -count_frames \
+            -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 \
+            renders/orbit-animation.mp4 > renders/mp4-frame-count.txt
+          test "$(cat renders/mp4-frame-count.txt)" = "$FRAME_COUNT"
+
+      - name: Upload frames, manifest and MP4
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtdt-orbit-192-frames
+          path: renders/
+          if-no-files-found: warn
+          retention-days: 14
