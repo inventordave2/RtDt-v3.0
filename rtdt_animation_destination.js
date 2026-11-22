@@ -35,9 +35,11 @@ var rtdt_animation_destination = (function () {
             finish: function () {
 
                 if (kind === 'folder') return Promise.resolve(null);
-                if (typeof rtdt_animation_export === 'undefined')
+                if (typeof rtdt_animation_export === 'undefined' && typeof require !== 'function')
                     throw new Error('Shared ZIP builder is missing');
-                var encoded = rtdt_animation_export.zip_archive(files);
+                var zipper = typeof rtdt_animation_export !== 'undefined' ?
+                    rtdt_animation_export : require('./rtdt_animation_export');
+                var encoded = zipper.zip_archive(files);
                 return Promise.resolve(options.output_archive(encoded));
             },
             bytes_written: function () { return total; }
