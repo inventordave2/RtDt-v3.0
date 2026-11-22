@@ -674,6 +674,7 @@
         /* The lifecycle is blue while downloading, green on success and red only on failure. */
         .rtdt-dep-loading { background:#edf5ff; border-left:3px solid #2479d8; padding-left:9px; }
         .rtdt-dep-loading b { color:#145eac; }
+        .rtdt-selected-filename { font-size: 12px; margin: 5px 0 10px; color: #30465e; overflow-wrap: anywhere; white-space: normal; line-height: 1.5; }
         .rtdt-phy-indicator { padding: 12px; margin: 10px 0; border-left: 4px solid #64748b; background: #f0f3f7; color: #243449; font-size: 13px; line-height: 1.6; }
         .rtdt-phy-indicator strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
         .rtdt-phy-indicator small { display: block; color: inherit; }
@@ -966,9 +967,9 @@
                 </div>
                 <div id="sceneLocalGroup" class="control-group" style="display:none">
                     <label for="sceneLocalFile">Your .scene file (JSON or YAML)</label>
-                    <input type="file" id="sceneLocalFile" accept=".scene,.yaml,.yml">
+                    <input type="file" id="sceneLocalFile" accept=".scene,.yaml,.yml"><div id="sceneLocalFileName" class="rtdt-selected-filename" role="status" aria-live="polite">No scene file selected</div>
                     <label for="sceneLocalAssets">Associated files (OBJ, texture, .phy)</label>
-                    <input type="file" id="sceneLocalAssets" multiple accept=".obj,.phy,.png,.jpg,.jpeg,.bmp,.ppm">
+                    <input type="file" id="sceneLocalAssets" multiple accept=".obj,.phy,.png,.jpg,.jpeg,.bmp,.ppm"><div id="sceneLocalAssetsName" class="rtdt-selected-filename" role="status" aria-live="polite">No asset files selected</div>
                     <p class="rtdt-caption">Choose any files listed in the scene configuration. Browsers cannot automatically read neighbouring local files without permission.</p>
                 </div>
                 <button id="btnLoadScene" class="rtdt-action-primary" type="button">Load scene</button>
@@ -1098,7 +1099,8 @@
       <select id="repoSampleSelect">
         <option value="scene">Orbit Studio (.scene)</option>
         <option value="phy">Orbit animation (.phy)</option>
-                <option value="phy-formula">Orbit formula animation (.phy)</option>
+        <option value="phy-formula">Orbit formula animation (.phy)</option>
+                
         <option value="obj">Pyramid mesh (.obj)</option>
         <option value="jpeg">Earth map (JPEG)</option>
       </select>
@@ -1106,7 +1108,7 @@
     </div>
     <div id="importLocalGroup" class="control-group" style="display:none;">
       <label for="importLocalFile">File from your computer</label>
-      <input id="importLocalFile" type="file" accept=".scene,application/json">
+      <input id="importLocalFile" type="file" accept=".scene,.yaml,.yml"><div id="importLocalFileName" class="rtdt-selected-filename" role="status" aria-live="polite">No file selected</div>
     </div>
     <button id="btnImportSelected" type="button">Import selected file</button>
     <div id="repoSampleStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
@@ -1156,7 +1158,7 @@
 </div>
 <div id="imageModal" class="modal"><div class="modal-content" role="dialog" aria-label="Image import">
 	<div class="modal-header"><button class="modal-close" data-close-dialog="imageModal" aria-label="Close">&times;</button>Import Image</div>
-	<label for="imageFile">PNG, JPEG or BMP (PPM also supported):</label><input type="file" id="imageFile" accept=".png,.jpg,.jpeg,.bmp,.ppm,image/png,image/jpeg,image/bmp">
+	<label for="imageFile">PNG, JPEG or BMP (PPM also supported):</label><input type="file" id="imageFile" accept=".png,.jpg,.jpeg,.bmp,.ppm,image/png,image/jpeg,image/bmp"><div id="imageFileName" class="rtdt-selected-filename" role="status" aria-live="polite">No texture file selected</div>
 	<label for="imagePurpose">Image purpose:</label><select id="imagePurpose"><option value="albedo">Material colour</option><option value="normal">Normal map (import only)</option><option value="height">Height/bump map (import only)</option></select>
 	<label for="materialTarget">Target shape:</label><select id="materialTarget"></select>
 	<p id="imageInfo" class="info-box">Select an image to import.</p><button id="btnImportImage">Import Image</button><button id="btnApplyImage">Apply to Material</button>
