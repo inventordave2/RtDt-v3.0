@@ -6,6 +6,22 @@ In active development.
 
 RtDt is a JavaScript raytracer for Node.js and a browser WebApp, with triangle meshes (including barycentric smooth normals), reflections, refraction, configurable cameras and lights, BVH subdivision, and AetherOre `.phy` keyframe animation. Designed and implemented by Dave as a reference for native-C porting and modelling.
 
+## Licence and editions
+
+**RtDt Community is licensed under the [MIT License](LICENSE).** Developers
+may use, modify, integrate, redistribute and commercialise the community
+source under MIT's notice-preservation condition.
+
+The RtDt copyright holder reserves the right to offer **separately licensed,
+source-readable premium enhancements, integrations, tools and other products**
+under independent commercial terms. Those terms apply only to the explicitly
+identified premium material; they do **not** limit rights granted in the
+MIT-licensed community source.
+
+See the [community and premium licensing policy](LICENSING.md) for
+scope and distribution guidance. Third-party samples and assets retain
+their own licences, including the [Lee Perry-Smith CC BY 3.0 notice](samples/lee-perry-smith-head/LICENSE.txt).
+
 ## Try RtDt
 
 **Browser:** [Open RtDt on GitHub Pages](https://inventordave2.github.io/RtDt-v3.0/webapp.html). For local development, serve this repository over HTTP rather than opening `file://`:
