@@ -2,15 +2,11 @@
 /* Optional provider sign-in for the Node CLI. Never imported by local rendering.
  * OAuth credentials stay outside the repo, with user-only filesystem permissions.
  */
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
+const credential_store = require('./rtdt_credential_store_node');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const {spawn} = require('node:child_process');
 
-const CACHE_DIR = path.join(os.homedir(),'.config','rtdt');
-const CACHE_FILE = path.join(CACHE_DIR,'auth.json');
 const PROVIDERS = ['google-drive','dropbox','onedrive'];
 const CLOUD_SCOPES = {
     'google-drive':['https://www.googleapis.com/auth/drive.file'],
@@ -32,50 +28,14 @@ function optional_dependency(name) {
     }
 }
 
-function read_cache() {
-
-    try {
-
-        return JSON.parse(fs.readFileSync(CACHE_FILE,'utf8'));
-    } catch (error) {
-
-        if (error.code === 'ENOENT') return {};
-        throw error;
-    }
-}
-
-function write_cache(cache) {
-
-    fs.mkdirSync(CACHE_DIR,{recursive:true,mode:0o700});
-    const temporary = path.join(CACHE_DIR,'auth-'+crypto.randomBytes(8).toString('hex'));
-    try {
-
-        fs.writeFileSync(temporary,JSON.stringify(cache,null,2)+'\n',{mode:0o600,flag:'wx'});
-        fs.chmodSync(temporary,0o600);
-        fs.renameSync(temporary,CACHE_FILE);
-    } finally {
-
-        try { fs.unlinkSync(temporary); } catch (error) {
-
-            if (error.code !== 'ENOENT') throw error;
-        }
-    }
-}
-
 function save_credentials(provider,credentials) {
 
-    if (!PROVIDERS.includes(provider)) throw new Error('Unknown cloud provider');
-    const cache = read_cache();
-    cache[provider] = credentials;
-    write_cache(cache);
+    credential_store.set_record(provider,credentials);
 }
 
 function remove_credentials(provider) {
 
-    if (!PROVIDERS.includes(provider)) throw new Error('Unknown cloud provider');
-    const cache = read_cache();
-    delete cache[provider];
-    write_cache(cache);
+    credential_store.delete_record(provider);
 }
 
 function open_browser(url) {
@@ -226,7 +186,7 @@ async function get_access_token(provider) {
     if (!PROVIDERS.includes(provider)) throw new Error('Unsupported cloud provider: '+provider);
     const environmentToken = process.env[tokenKeys[provider]];
     if (environmentToken) return environmentToken;
-    const record = read_cache()[provider];
+    const record = credential_store.get_record(provider);
     if (!record)
         throw new Error('Not connected to '+provider+'. Run: node cli.js auth login '+provider+
             ' (or supply '+tokenKeys[provider]+' for CI)');
@@ -237,6 +197,12 @@ async function get_access_token(provider) {
         oauth.setCredentials(record.tokens);
         const result = await oauth.getAccessToken();
         if (!result || !result.token) throw new Error('Could not refresh Google OAuth token');
+        const refreshed = Object.assign({},record.tokens,oauth.credentials);
+        if (refreshed.access_token !== record.tokens.access_token ||
+            refreshed.expiry_date !== record.tokens.expiry_date) {
+
+            save_credentials(provider,Object.assign({},record,{tokens:refreshed}));
+        }
         return result.token;
     }
     if (provider === 'dropbox') {
@@ -247,6 +213,12 @@ async function get_access_token(provider) {
         await auth.checkAndRefreshAccessToken();
         const token = auth.getAccessToken();
         if (!token) throw new Error('Could not refresh Dropbox OAuth token');
+        const rotated = typeof auth.getRefreshToken === 'function' ?
+            auth.getRefreshToken() : null;
+        if (rotated && rotated !== record.tokens.refresh_token)
+            save_credentials(provider,Object.assign({},record,{
+                tokens:Object.assign({},record.tokens,{refresh_token:rotated})
+            }));
         return token;
     }
     const msal = optional_dependency('@azure/msal-node');
@@ -268,10 +240,14 @@ async function auth_command(args) {
     const action = args[0], provider = args[1];
     if (action === 'status') {
 
-        const cache = read_cache();
         PROVIDERS.forEach(function (name) {
 
-            console.log(name+': '+(cache[name] ? 'credentials cached' : 'not connected'));
+            const envNames = {'google-drive':'RTDT_GOOGLE_ACCESS_TOKEN',
+                'dropbox':'RTDT_DROPBOX_ACCESS_TOKEN',
+                'onedrive':'RTDT_ONEDRIVE_ACCESS_TOKEN'};
+            const status = process.env[envNames[name]] ?
+                'temporary environment credential' : credential_store.store_status(name);
+            console.log(name+': '+status);
         });
         return;
     }
@@ -294,4 +270,4 @@ async function auth_command(args) {
 }
 
 module.exports = {PROVIDERS,auth_command,get_access_token,
-    read_cache,save_credentials,remove_credentials,optional_dependency};
+    save_credentials,remove_credentials,optional_dependency};
