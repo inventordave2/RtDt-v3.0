@@ -14,7 +14,7 @@ var rtdt_scene_format = (function () {
             if (quote === '"' && c === '\\') { escaped = true; continue; }
             if (quote) { if (c === quote) quote = null; continue; }
             if (c === '"' || c === "'") { quote = c; continue; }
-            if (c === '#' && (i === 0 || /\\s/.test(source[i - 1])))
+            if (c === '#' && (i === 0 || /\s/.test(source[i - 1])))
                 return source.slice(0, i);
         }
         return source;
@@ -57,7 +57,7 @@ var rtdt_scene_format = (function () {
             if (c === '[' || c === '{') depth++;
             if (c === ']' || c === '}') depth--;
             if (c === ':' && depth === 0 && (i === value.length - 1 ||
-                /\\s/.test(value[i + 1]))) return i;
+                /\s/.test(value[i + 1]))) return i;
         }
         return -1;
     }
@@ -69,7 +69,7 @@ var rtdt_scene_format = (function () {
         if (value === 'null' || value === '~') return null;
         if (value === 'true') return true;
         if (value === 'false') return false;
-        if (/^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value)) {
+        if (/^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value)) {
 
             var number = Number(value);
             if (!Number.isFinite(number)) throw new Error('Non-finite YAML number');
@@ -100,7 +100,7 @@ var rtdt_scene_format = (function () {
             });
             return object;
         }
-        if (/^(?:!|&|\\*|<<:)/.test(value) || /^(?:\\||>)/.test(value))
+        if (/^(?:!|&|\*|<<:)/.test(value) || /^(?:\||>)/.test(value))
             throw new Error('Unsupported YAML tag, alias, merge, or block scalar');
         return value;
     }
@@ -110,10 +110,10 @@ var rtdt_scene_format = (function () {
         if (typeof source !== 'string' || source.length > 2000000)
             throw new Error('Invalid or oversized scene YAML document');
         var lines = [];
-        source.replace(/^\\uFEFF/, '').split(/\\r?\\n/).forEach(function (sourceLine, index) {
+        source.replace(/^\uFEFF/, '').split(/\r?\n/).forEach(function (sourceLine, index) {
 
-            if (/^\\s*\\t/.test(sourceLine)) throw new Error('YAML indentation must use spaces');
-            var without = strip_comment(sourceLine).replace(/\\s+$/, '');
+            if (/^\s*\t/.test(sourceLine)) throw new Error('YAML indentation must use spaces');
+            var without = strip_comment(sourceLine).replace(/\s+$/, '');
             if (!without.trim() || without.trim() === '---' || without.trim() === '...') return;
             var spaces = /^ */.exec(without)[0].length;
             lines.push({indent:spaces, text:without.slice(spaces), number:index + 1});
