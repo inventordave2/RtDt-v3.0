@@ -181,13 +181,13 @@ function set_record(provider,credentials) {
         try {
 
             entry.setPassword(JSON.stringify(credentials));
+            return;
         } catch (error) {
 
             if (!allow_plaintext())
                 throw new Error('Could not write OS credential store for '+provider+
                     '. '+fallback_notice());
         }
-        if (!allow_plaintext()) return;
     }
     if (!allow_plaintext()) throw new Error(fallback_notice());
     const cache = read_plaintext(FALLBACK_FILE);
