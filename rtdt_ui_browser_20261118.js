@@ -414,6 +414,8 @@ var rtdt_ui_browser = (function () {
         var animator = rtdt_aetherore.create_animator(model, phy_bindings());
         phy_model = model;
         phy_animator = animator;
+        if (model.timeline && model.timeline.duration)
+            element('phyEndTime').value = String(model.timeline.duration);
         element('phyTime').value = '0';
         apply_phy();
         status('phyStatus', 'Loaded AetherOre ' + filename + ' at t=0.', 'success');
