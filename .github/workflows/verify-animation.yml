@@ -12,6 +12,17 @@ on:
       - 'rtdt_scene_browser.js'
       - 'samples/orbit.scene'
       - 'samples/orbit/orbit-formula.phy'
+      - 'rtdt_cloud_auth_node.js'
+      - 'rtdt_cloud_storage.js'
+      - 'rtdt_cloud_storage_node.js'
+      - 'rtdt_credential_store_node.js'
+      - 'rtdt_animation_batch.js'
+      - 'rtdt_animation_destination.js'
+      - 'rtdt_animation_export.js'
+      - 'rtdt_png.js'
+      - 'tests/credential-store.test.js'
+      - 'tests/cloud-uploads.test.js'
+      - 'tests/animation-export.test.js'
 
 permissions:
   contents: read
@@ -48,6 +59,12 @@ jobs:
           node --check cli.js
           node tests/aetherore-formula.test.js
           node cli.js --help > /dev/null
+
+      - name: Check ZIP parity and cloud credential safety
+        run: |
+          node tests/animation-export.test.js
+          node tests/cloud-uploads.test.js
+          node tests/credential-store.test.js
 
       - name: Render complete sequence
         shell: bash
