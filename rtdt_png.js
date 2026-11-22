@@ -108,17 +108,17 @@ var rtdt_png = (function () {
 
         if (!pixels || pixels.length !== width * height)
             throw new Error('Invalid PNG pixel count');
-        if (typeof rtdt_colour === 'undefined')
-            throw new Error('RtDt colour module is required for PNG');
+        var colour_module = typeof rtdt_colour !== 'undefined' ?
+            rtdt_colour : require('./rtdt_colour');
         var rgba = new Uint8Array(pixels.length * 4);
         for (var i = 0; i < pixels.length; i++) {
 
             var pixel = pixels[i];
             if (!pixel || ![pixel.r,pixel.g,pixel.b].every(Number.isFinite))
                 throw new Error('Invalid PNG colour at pixel ' + i);
-            rgba[i*4] = rtdt_colour.byte(pixel.r);
-            rgba[i*4+1] = rtdt_colour.byte(pixel.g);
-            rgba[i*4+2] = rtdt_colour.byte(pixel.b);
+            rgba[i*4] = colour_module.byte(pixel.r);
+            rgba[i*4+1] = colour_module.byte(pixel.g);
+            rgba[i*4+2] = colour_module.byte(pixel.b);
             rgba[i*4+3] = 255;
         }
         return encode_rgba(rgba,width,height);
