@@ -490,6 +490,23 @@ var rtdt_ui_browser = (function () {
         element('importKind').focus();
     }
 
+    function show_selected_files(inputId, outputId) {
+
+        var input = element(inputId), output = element(outputId);
+        if (!input || !output) return;
+        var files = Array.prototype.slice.call(input.files || []);
+        if (!files.length) {
+
+            output.textContent = input.multiple ? 'No asset files selected' : 'No file selected';
+            return;
+        }
+        output.textContent = (files.length > 1 ? files.length + ' files: ' : 'Selected: ') +
+            files.map(function (file) {
+
+                return file.webkitRelativePath || file.name;
+            }).join(', ');
+    }
+
     function update_import_fields() {
         var kind = element('importKind').value;
         var local = element('importSource').value === 'local';
@@ -498,10 +515,11 @@ var rtdt_ui_browser = (function () {
         var choices = {scene:'scene',phy:'phy',obj:'obj',image:'jpeg'};
         element('repoSampleSelect').value = choices[kind];
         var fileInput = element('importLocalFile');
-        var accepts = {scene:'.scene,application/json',phy:'.phy',obj:'.obj',
+        var accepts = {scene:'.scene,.yaml,.yml',phy:'.phy',obj:'.obj',
             image:'.png,.jpg,.jpeg,.bmp,.ppm,image/png,image/jpeg,image/bmp'};
         fileInput.accept = accepts[kind];
         fileInput.value = '';
+        show_selected_files('importLocalFile','importLocalFileName');
     }
 
     function use_scene_source(source, name, localFiles) {
@@ -633,7 +651,10 @@ var rtdt_ui_browser = (function () {
                 element('importKind').value);
         return promise.then(function (ok) {
             if (ok) {
-                status('repoSampleStatus','File imported successfully.','success');
+                var selected = element('importSource').value === 'local' ?
+                    element('importLocalFile').files[0] : null;
+                status('repoSampleStatus', selected ? 'Imported ' + selected.name :
+                    'Repository file imported successfully.', 'success');
                 close_dialog('importModal');
                 close_dialog('aboutModal');
             }
@@ -1287,6 +1308,11 @@ var rtdt_ui_browser = (function () {
         bind('btnImportSelected', 'click', import_selected_file);
         bind('importKind', 'change', update_import_fields);
         bind('importSource', 'change', update_import_fields);
+        [['sceneLocalFile','sceneLocalFileName'],['sceneLocalAssets','sceneLocalAssetsName'],
+            ['importLocalFile','importLocalFileName'],['imageFile','imageFileName']].forEach(function (pair) {
+
+            bind(pair[0],'change',function () { show_selected_files(pair[0],pair[1]); });
+        });
         bind('btnTimeBack', 'click', function () { step_phy_frame(-1); });
         bind('btnTimeForward', 'click', function () { step_phy_frame(1); });
         var resolutionButtons = document.querySelectorAll('[data-render-size]');
