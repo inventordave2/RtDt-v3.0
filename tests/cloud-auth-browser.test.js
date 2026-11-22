@@ -119,11 +119,12 @@ async function login_pkce(provider) {
         assert.match(url.hostname,/dropbox/);
     else
         assert.match(url.hostname,/microsoftonline/);
+    const tokenCallsBefore = tokenCalls;
     listeners.message({origin:'https://attacker.example',source:popup,
         data:{type:'rtdt-oauth-code',state:state,code:'sample-code'}});
     listeners.message({origin:'https://rtdt.example',source:popup,
         data:{type:'rtdt-oauth-code',state:'incorrect',code:'sample-code'}});
-    assert.equal(tokenCalls,0,'Invalid origin and state must be ignored');
+    assert.equal(tokenCalls,tokenCallsBefore,'Invalid origin and state must be ignored');
     listeners.message({origin:'https://rtdt.example',source:popup,
         data:{type:'rtdt-oauth-code',state:state,code:'sample-code'}});
     await pending;
