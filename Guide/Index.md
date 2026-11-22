@@ -2,6 +2,8 @@
 
 The root [README](../README.md) remains the GitHub project front page.
 
+**Licensing:** [MIT community licence](../LICENSE) and [separate premium licensing policy](../LICENSING.md).
+
 ## Getting started
 - [CLI](CLI.md)
 - [Quick reference](Quick-reference.md)
