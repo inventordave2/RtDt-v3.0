@@ -48,23 +48,8 @@ function pngChunk(name, data) {
     return chunk;
 }
 function encodePNG(pixels, width, height) {
-    const raw = rgba(pixels, width, height);
-    const stride = width * 4;
-    const scanlines = Buffer.alloc((stride + 1) * height);
-    for (let y = 0; y < height; y++) {
-        raw.copy(scanlines, y * (stride + 1) + 1, y * stride, (y + 1) * stride);
-    }
-    const header = Buffer.alloc(13);
-    header.writeUInt32BE(width, 0);
-    header.writeUInt32BE(height, 4);
-    header[8] = 8; // bit depth
-    header[9] = 6; // RGB with alpha
-    return Buffer.concat([
-        Buffer.from([137,80,78,71,13,10,26,10]),
-        pngChunk('IHDR',header),
-        pngChunk('IDAT',zlib.deflateSync(scanlines)),
-        pngChunk('IEND',Buffer.alloc(0))
-    ]);
+
+    return Buffer.from(require('./rtdt_png').encode(pixels,width,height));
 }
 function encodeJPEG(pixels,width,height,quality) {
     // Pure JavaScript encoder installed with npm install.
