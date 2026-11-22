@@ -107,6 +107,34 @@ var rtdt_ui_browser = (function () {
         render_animation_frame();
     }
 
+    function cloud_destination_changed() {
+
+        var provider = element('phyExportDestination').value;
+        var isCloud = ['google-drive','dropbox','onedrive'].indexOf(provider) >= 0;
+        element('phyCloudSettings').style.display = isCloud ? 'block' : 'none';
+        if (isCloud) {
+
+            status('phyCloudStatus',rtdt_cloud_auth_browser.connected(provider) ?
+                'Account connected for this browser session.' :
+                'Not connected. Enter your OAuth application ID and select Connect.','info');
+        }
+    }
+
+    async function connect_cloud_account() {
+
+        var provider = element('phyExportDestination').value;
+        var clientId = element('phyCloudClientId').value.trim();
+        try {
+
+            status('phyCloudStatus','Authorising '+provider+'…','info');
+            await rtdt_cloud_auth_browser.connect(provider,clientId);
+            status('phyCloudStatus','✓ '+provider+' connected for this browser session.','success');
+        } catch (error) {
+
+            status('phyCloudStatus','Cloud login failed: '+error.message,'error');
+        }
+    }
+
     function batch_status(message, mode) {
 
         status('phyExportStatus',message,mode || 'info');
@@ -160,8 +188,12 @@ var rtdt_ui_browser = (function () {
             rtdt_animation_batch.settings({startFrame:start,endFrame:end,fps:fps,
                 width:width,height:height,sink:{add:function(){},finish:function(){}},
                 render_frame:function(){}});
-            // Ask for a directory synchronously from the user gesture where supported.
-            sink = await rtdt_animation_storage_browser.create(destination);
+            if (['google-drive','dropbox','onedrive'].indexOf(destination) >= 0 &&
+                !rtdt_cloud_auth_browser.connected(destination))
+                throw new Error('Connect your '+destination+' account before exporting');
+            // Ask for local folder permission from this user gesture when needed.
+            sink = await rtdt_animation_storage_browser.create(destination,
+                element('phyCloudFolder').value.trim());
             if (running || playback_active || !scene_loaded)
                 throw new Error('Scene changed while selecting an output destination');
             export_active = true;
@@ -205,7 +237,8 @@ var rtdt_ui_browser = (function () {
             finished = true;
             batch_status('Export complete: '+result.manifest.frames.length+
                 ' PNG frames and manifest.json '+(destination==='zip'?
-                    'downloaded in ZIP.':'written to the selected folder.'),'success');
+                    'downloaded in ZIP.':destination==='folder'?
+                    'written to the selected folder.':'uploaded to '+destination+'.'),'success');
         } catch (error) {
 
             batch_status('Animation export '+(export_cancelled?'stopped: ':'failed: ')+
@@ -1459,6 +1492,9 @@ var rtdt_ui_browser = (function () {
         bind('btnStopPhy', 'click', function () { stop_animation(false); });
         bind('btnExportPhy','click',start_batch);
         bind('btnCancelExportPhy','click',cancel_batch);
+        bind('phyExportDestination','change',cloud_destination_changed);
+        bind('btnConnectPhyCloud','click',connect_cloud_account);
+        cloud_destination_changed();
         bind('btnRender', 'click', start_render);
         bind('btnAbort', 'click', cancel_render);
         bind('btnUpdateCamera', 'click', change_camera);
