@@ -9,11 +9,10 @@
  *   - Material definitions and references
  *   - Transform composition
  * 
- * This module is dual-licensed under:
- * 1. MIT License (for open-source use)
- * 2. Commercial License (for commercial use)
- * 
- * See LICENSE-MIT.txt and LICENSE-COMMERCIAL.txt for details.
+ * RtDt Community module: MIT License (see repository root LICENSE).
+ * Separately offered premium products may use independent commercial terms;
+ * those terms do not restrict this MIT-licensed source file.
+ * See LICENSING.md for the scope of the community and premium licences.
  */
 
 var fs = require('fs');
