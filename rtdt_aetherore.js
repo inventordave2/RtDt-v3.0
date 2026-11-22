@@ -12,9 +12,36 @@ var rtdt_aetherore = (function () {
         log2:function (x) { return Math.log(x)/Math.LN2; }
     };
 
+    function validate_component(value) {
+
+        if (typeof value === 'string') {
+
+            compile_expression(value);
+            return;
+        }
+        if (typeof value !== 'number' || !isFinite(value))
+            throw new Error('Invalid .phy numeric or formula component');
+    }
+
+    function validate_parameters(parameters) {
+
+        if (parameters === undefined) return;
+        if (!parameters || Array.isArray(parameters) || typeof parameters !== 'object')
+            throw new Error('.phy parameters must be a mapping');
+        Object.keys(parameters).forEach(function (key) {
+
+            if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(key) || key === 't' ||
+                key === '__proto__' || key === 'constructor' || key === 'prototype')
+                throw new Error('Invalid or reserved .phy parameter: '+key);
+            if (typeof parameters[key] !== 'number' || !isFinite(parameters[key]))
+                throw new Error('Parameter '+key+' must be a finite number');
+        });
+    }
+
     function parse_phy(source) {
 
-        var model = typeof source === 'string' ? JSON.parse(source) : source;
+        var model = typeof source === 'string' ?
+            (typeof rtdt_scene_format !== 'undefined' ? rtdt_scene_format.parse(source) : JSON.parse(source)) : source;
         if (!model || typeof model !== 'object' || Array.isArray(model) || model.version !== 1)
             throw new Error('Expected .phy version 1 document');
         if (model.objects !== undefined && !Array.isArray(model.objects))
@@ -23,6 +50,11 @@ var rtdt_aetherore = (function () {
             (typeof model.timeline.fps !== 'number' || !isFinite(model.timeline.fps) ||
              model.timeline.fps <= 0))
             throw new Error('Invalid .phy fps');
+        validate_parameters(model.parameters);
+        if (model.timeline && model.timeline.duration !== undefined &&
+            (typeof model.timeline.duration !== 'number' ||
+             !isFinite(model.timeline.duration) || model.timeline.duration <= 0))
+            throw new Error('Invalid .phy duration');
         var names = {};
         (model.objects || []).forEach(function (track) {
 
@@ -34,20 +66,25 @@ var rtdt_aetherore = (function () {
             ['position','rotation','scale','shear'].forEach(function (key) {
 
                 if (!motion[key]) return;
-                if (!Array.isArray(motion[key]) || !motion[key].length)
-                    throw new Error('Invalid '+key+' keyframes');
+                var channel = motion[key], length = key === 'shear' ? 6 : 3;
+                if (!Array.isArray(channel) || !channel.length)
+                    throw new Error('Invalid '+key+' motion channel');
+                // A direct vector defines a continuously evaluated mathematical motion.
+                if (typeof channel[0] === 'number' || typeof channel[0] === 'string') {
+
+                    if (channel.length !== length)
+                        throw new Error('Invalid '+key+' formula vector length');
+                    channel.forEach(validate_component);
+                    return;
+                }
                 var previous = -Infinity;
-                motion[key].forEach(function (frame) {
+                channel.forEach(function (frame) {
 
                     if (!frame || typeof frame.time !== 'number' || !isFinite(frame.time) ||
                         frame.time < 0 || frame.time <= previous || !Array.isArray(frame.value) ||
-                        frame.value.length !== (key === 'shear' ? 6 : 3))
+                        frame.value.length !== length)
                         throw new Error('Invalid '+key+' keyframe');
-                    frame.value.forEach(function (v) {
-
-                        if (typeof v !== 'string' && (typeof v !== 'number' || !isFinite(v)))
-                            throw new Error('Invalid keyframe component');
-                    });
+                    frame.value.forEach(validate_component);
                     previous = frame.time;
                 });
             });
@@ -243,6 +280,11 @@ var rtdt_aetherore = (function () {
 
     function channel_at(frames,time,variables,options) {
 
+        if (typeof frames[0] === 'number' || typeof frames[0] === 'string')
+            return frames.map(function (value) {
+
+                return resolved(value,time,variables,options);
+            });
         if (time <= frames[0].time)
             return frames[0].value.map(function (v) { return resolved(v,time,variables,options); });
         var last = frames[frames.length-1];
@@ -270,13 +312,23 @@ var rtdt_aetherore = (function () {
         if (typeof time !== 'number' || !isFinite(time) || time < 0)
             throw new RangeError('Time must be a nonnegative finite number');
         var result = {};
+        var scoped = {};
+        Object.keys(model.parameters || {}).forEach(function (key) {
+
+            scoped[key] = model.parameters[key];
+        });
+        Object.keys(variables || {}).forEach(function (key) {
+
+            if (key === 't') throw new Error('t is reserved for time');
+            scoped[key] = variables[key];
+        });
         (model.objects || []).forEach(function (track) {
 
             var pose = {}, motion = track.motion || {};
             ['position','rotation','scale','shear'].forEach(function (channel) {
 
                 if (motion[channel])
-                    pose[channel] = channel_at(motion[channel],time,variables,options);
+                    pose[channel] = channel_at(motion[channel],time,scoped,options);
             });
             result[track.id] = pose;
         });
