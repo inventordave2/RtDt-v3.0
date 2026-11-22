@@ -197,7 +197,100 @@ function check_cli() {
     assert.match(bad.stdout+bad.stderr,/validation failed|not found|ENOENT/i);
 }
 
+function check_job_execution() {
+
+    const workDir = fs.mkdtempSync(path.join(os.tmpdir(),'rtdt-job-test-'));
+    try {
+
+        const manifest = path.join(workDir,'job.rdt');
+        const scene = path.join(workDir,'orbit.scene');
+        const animation = path.join(workDir,'orbit','orbit-formula.phy');
+        fs.mkdirSync(path.dirname(animation),{recursive:true});
+        fs.copyFileSync(path.join(ROOT,'samples','orbit.scene'),scene);
+        fs.copyFileSync(path.join(ROOT,'samples','orbit','orbit-formula.phy'),
+            animation);
+        const job = {version:1,name:'Job integration test',
+            scene:'orbit.scene',phy:'orbit/orbit-formula.phy',
+            render:{width:12,height:10,quality:1,fps:12,
+                frames:{start:2,end:3}},
+            output:{destination:'zip',path:'out/test-animation.zip',format:'png'}};
+        write_json(manifest,job);
+        const finished = cp.spawnSync(process.execPath,
+            [path.join(ROOT,'cli.js'),'--job',manifest],{
+                cwd:ROOT,encoding:'utf8',timeout:120000
+            });
+        assert.equal(finished.status,0,finished.stderr+'\n'+finished.stdout);
+        const archive = path.join(workDir,'out','test-animation.zip');
+        assert.ok(fs.existsSync(archive),'Pack job must write ZIP beside manifest');
+        const bytes = fs.readFileSync(archive);
+        assert.equal(bytes.readUInt32LE(0),0x04034b50);
+        assert.ok(bytes.includes(Buffer.from('frame-0002.png')));
+        assert.ok(bytes.includes(Buffer.from('frame-0003.png')));
+        assert.ok(bytes.includes(Buffer.from('manifest.json')));
+        const manifestOffset = bytes.indexOf(Buffer.from('manifest.json'));
+        assert.ok(manifestOffset>=0);
+
+        job.output = {destination:'folder',path:'out/frames',format:'png'};
+        write_json(manifest,job);
+        const folder = cp.spawnSync(process.execPath,
+            [path.join(ROOT,'cli.js'),'--job',manifest],{
+                cwd:ROOT,encoding:'utf8',timeout:120000
+            });
+        assert.equal(folder.status,0,folder.stderr+'\n'+folder.stdout);
+        const framesDir = path.join(workDir,'out','frames');
+        assert.ok(fs.existsSync(path.join(framesDir,'frame-0002.png')));
+        assert.ok(fs.existsSync(path.join(framesDir,'frame-0003.png')));
+        assert.deepEqual(fs.readFileSync(path.join(framesDir,'frame-0002.png')),
+            zip_entry(bytes,'frame-0002.png'),
+            'Pack ZIP and folder must contain byte-identical frames');
+        const info = JSON.parse(fs.readFileSync(path.join(framesDir,'manifest.json')));
+        assert.equal(info.fps,12,'Manifest FPS must override the .phy timeline');
+        assert.equal(info.startFrame,2);
+        assert.equal(info.endFrame,3);
+
+        job.render = {width:12,height:10,quality:1};
+        job.output = {destination:'file',path:'out/still.png',format:'png'};
+        write_json(manifest,job);
+        const still = cp.spawnSync(process.execPath,
+            [path.join(ROOT,'cli.js'),'--job',manifest],{
+                cwd:ROOT,encoding:'utf8',timeout:120000
+            });
+        assert.equal(still.status,0,still.stderr+'\n'+still.stdout);
+        assert.ok(fs.readFileSync(path.join(workDir,'out','still.png'))
+            .subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
+
+        job.scene = 'missing.scene';
+        write_json(manifest,job);
+        const invalid = cp.spawnSync(process.execPath,
+            [path.join(ROOT,'cli.js'),'--job',manifest],{
+                cwd:ROOT,encoding:'utf8',timeout:120000
+            });
+        assert.notEqual(invalid.status,0);
+        assert.ok(!fs.existsSync(path.join(workDir,'out','missing.png')));
+    } finally {
+
+        fs.rmSync(workDir,{recursive:true,force:true});
+    }
+}
+
+function zip_entry(bytes,name) {
+
+    let offset=0;
+    while (bytes.readUInt32LE(offset)===0x04034b50) {
+
+        const size=bytes.readUInt32LE(offset+18);
+        const nameLength=bytes.readUInt16LE(offset+26);
+        const extraLength=bytes.readUInt16LE(offset+28);
+        const filename=bytes.subarray(offset+30,offset+30+nameLength).toString();
+        const start=offset+30+nameLength+extraLength;
+        if (filename===name) return bytes.subarray(start,start+size);
+        offset=start+size;
+    }
+    throw new Error('ZIP entry not found: '+name);
+}
+
 check_parser();
 check_linter();
 check_cli();
-console.log('RDT v1 grammar, dependencies, symlink protection and CLI lint passed');
+check_job_execution();
+console.log('RDT v1 grammar, preflight and CLI job execution (ZIP/folder/still) passed');
