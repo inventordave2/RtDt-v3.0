@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "Orbit Studio — 192-frame AetherOre pack",
+  "scene": "orbit.scene",
+  "phy": "orbit/orbit-formula.phy",
+  "render": {
+    "width": 160,
+    "height": 90,
+    "quality": 1,
+    "fps": 24,
+    "frames": {
+      "start": 0,
+      "end": 191
+    }
+  },
+  "output": {
+    "destination": "zip",
+    "path": "orbit-animation.zip",
+    "format": "png"
+  }
+}
