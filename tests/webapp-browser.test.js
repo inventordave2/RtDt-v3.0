@@ -160,9 +160,86 @@ async function main() {
             const status = document.querySelector('#phyExportStatus');
             return status && /Connect your dropbox account/.test(status.textContent);
         });
+        // Hosted .rdt manifest uses the same scene and animation pipeline.
+        await page.selectOption('#sceneSource','pack');
+        await page.selectOption('#packSource','repo');
+        await page.locator('#btnLoadScene').click();
+        await page.waitForFunction(function () {
+
+            const status = document.querySelector('#packStatus');
+            return status && /pack loaded|Pack failed/i.test(status.textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#packStatus').innerText(),/pack loaded/i);
+        assert.equal(await page.inputValue('#renderWidth'),'160');
+        assert.equal(await page.inputValue('#renderHeight'),'90');
+        assert.equal(await page.inputValue('#phyExportStart'),'0');
+        assert.equal(await page.inputValue('#phyExportEnd'),'191');
+        assert.equal(await page.inputValue('#phyExportDestination'),'zip');
+        await page.fill('#renderWidth','12');
+        await page.fill('#renderHeight','10');
+        await page.fill('#phyExportEnd','1');
+        const packDownload = page.waitForEvent('download',{timeout:60000});
+        await page.locator('#btnExportPhy').click();
+        const packZip = await packDownload;
+        assert.equal(packZip.suggestedFilename(),'orbit-animation.zip');
+        const packZipPath = path.join(temp,'hosted-pack.zip');
+        await packZip.saveAs(packZipPath);
+        assert.equal(Object.keys(zip_files(fs.readFileSync(packZipPath))).length,3);
+        await page.waitForFunction(function () {
+
+            return /Export complete/.test(
+                document.querySelector('#phyExportStatus').textContent);
+        });
+
+        // A local directory grants access to the pack and its dependencies.
+        const folder = path.join(temp,'local-rtd-pack');
+        fs.mkdirSync(path.join(folder,'orbit'),{recursive:true});
+        fs.copyFileSync(path.join(ROOT,'samples','orbit.scene'),
+            path.join(folder,'orbit.scene'));
+        fs.copyFileSync(path.join(ROOT,'samples','orbit','orbit-formula.phy'),
+            path.join(folder,'orbit','orbit-formula.phy'));
+        const localPack = {
+            version:1,name:'Local directory pack',
+            scene:'orbit.scene',phy:'orbit/orbit-formula.phy',
+            render:{width:12,height:10,quality:1,fps:12,
+                frames:{start:1,end:2}},
+            output:{destination:'zip',path:'local-pack.zip',format:'png'}
+        };
+        fs.writeFileSync(path.join(folder,'project.rdt'),
+            JSON.stringify(localPack,null,2));
+        await page.selectOption('#packSource','local');
+        await page.locator('#packLocalFiles').setInputFiles(folder);
+        await page.locator('#btnLoadScene').click();
+        await page.waitForFunction(function () {
+
+            const status = document.querySelector('#packStatus');
+            return status && /Local directory pack|Pack failed/.test(
+                status.textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#packStatus').innerText(),
+            /Local directory pack/);
+        assert.equal(await page.inputValue('#phyExportStart'),'1');
+        assert.equal(await page.inputValue('#phyExportEnd'),'2');
+        const localDownload = page.waitForEvent('download',{timeout:60000});
+        await page.locator('#btnExportPhy').click();
+        const localZip = await localDownload;
+        assert.equal(localZip.suggestedFilename(),'local-pack.zip');
+        const localPath = path.join(temp,'local-pack.zip');
+        await localZip.saveAs(localPath);
+        const localEntries = zip_files(fs.readFileSync(localPath));
+        assert.deepEqual(Object.keys(localEntries).sort(),[
+            'frame-0001.png','frame-0002.png','manifest.json'
+        ]);
+        assert.equal(JSON.parse(localEntries['manifest.json']).fps,12);
+        await page.waitForFunction(function () {
+
+            return /Export complete/.test(
+                document.querySelector('#phyExportStatus').textContent);
+        });
+
         assert.deepEqual(pageErrors,[],'Browser runtime errors: '+pageErrors.join('; '));
         await context.close();
-        console.log('Chromium: repository scene + AetherOre + PNG ZIP and cloud login gate passed');
+        console.log('Chromium: scene + hosted/local RDT packs + AetherOre ZIP and cloud gate passed');
     } finally {
 
         if (browser) await browser.close();
