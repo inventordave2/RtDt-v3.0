@@ -366,7 +366,6 @@ function renderScene() {
 
 	try {
 	
-            if (/(?:\.scene(?:\.ya?ml)?|\.ya?ml)$/i.test(cliConfig.sceneName)) {
 		log('Resolution: ' + cliConfig.width + 'x' + cliConfig.height);
 		log('Quality: ' + cliConfig.quality);
 		log('');
