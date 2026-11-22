@@ -1,0 +1,19 @@
+version: 1
+timeline:
+  fps: 24
+  duration: 8
+parameters:
+  radius: 3
+  speed: 0.8
+objects:
+  - id: "0"
+    motion:
+      position: ["radius * (cos(t * speed) - 1)", "0.5 * sin(t * 2)", "radius * sin(t * speed)"]
+      rotation: [0, "t * speed", 0]
+  - id: "1"
+    motion:
+      rotation:
+        - time: 0
+          value: [0, 0, 0]
+        - time: 8
+          value: [0, 3.141592653589793, 0]
