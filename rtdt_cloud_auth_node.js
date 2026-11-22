@@ -190,49 +190,58 @@ async function get_access_token(provider) {
     if (!record)
         throw new Error('Not connected to '+provider+'. Run: node cli.js auth login '+provider+
             ' (or supply '+tokenKeys[provider]+' for CI)');
-    if (provider === 'google-drive') {
+    try {
 
-        const {google} = optional_dependency('googleapis');
-        const oauth = new google.auth.OAuth2(record.clientId,record.clientSecret);
-        oauth.setCredentials(record.tokens);
-        const result = await oauth.getAccessToken();
-        if (!result || !result.token) throw new Error('Could not refresh Google OAuth token');
-        const refreshed = Object.assign({},record.tokens,oauth.credentials);
-        if (refreshed.access_token !== record.tokens.access_token ||
-            refreshed.expiry_date !== record.tokens.expiry_date) {
-
-            save_credentials(provider,Object.assign({},record,{tokens:refreshed}));
+        if (provider === 'google-drive') {
+    
+            const {google} = optional_dependency('googleapis');
+            const oauth = new google.auth.OAuth2(record.clientId,record.clientSecret);
+            oauth.setCredentials(record.tokens);
+            const result = await oauth.getAccessToken();
+            if (!result || !result.token) throw new Error('Could not refresh Google OAuth token');
+            const refreshed = Object.assign({},record.tokens,oauth.credentials);
+            if (refreshed.access_token !== record.tokens.access_token ||
+                refreshed.expiry_date !== record.tokens.expiry_date) {
+    
+                save_credentials(provider,Object.assign({},record,{tokens:refreshed}));
+            }
+            return result.token;
         }
-        return result.token;
-    }
-    if (provider === 'dropbox') {
+        if (provider === 'dropbox') {
+    
+            const sdk = optional_dependency('dropbox');
+            const auth = new sdk.DropboxAuth({clientId:record.clientId});
+            auth.setRefreshToken(record.tokens.refresh_token);
+            await auth.checkAndRefreshAccessToken();
+            const token = auth.getAccessToken();
+            if (!token) throw new Error('Could not refresh Dropbox OAuth token');
+            const rotated = typeof auth.getRefreshToken === 'function' ?
+                auth.getRefreshToken() : null;
+            if (rotated && rotated !== record.tokens.refresh_token)
+                save_credentials(provider,Object.assign({},record,{
+                    tokens:Object.assign({},record.tokens,{refresh_token:rotated})
+                }));
+            return token;
+        }
+        const msal = optional_dependency('@azure/msal-node');
+        const app = new msal.PublicClientApplication({
+            auth:{clientId:record.clientId,authority:'https://login.microsoftonline.com/common'}
+        });
+        app.getTokenCache().deserialize(record.tokenCache);
+        const accounts = await app.getTokenCache().getAllAccounts();
+        if (!accounts.length) throw new Error('OneDrive login expired. Run auth login onedrive');
+        const result = await app.acquireTokenSilent({scopes:CLOUD_SCOPES.onedrive,
+            account:accounts[0]});
+        record.tokenCache = app.getTokenCache().serialize();
+        save_credentials('onedrive',record);
+        return result.accessToken;
+    } catch (error) {
 
-        const sdk = optional_dependency('dropbox');
-        const auth = new sdk.DropboxAuth({clientId:record.clientId});
-        auth.setRefreshToken(record.tokens.refresh_token);
-        await auth.checkAndRefreshAccessToken();
-        const token = auth.getAccessToken();
-        if (!token) throw new Error('Could not refresh Dropbox OAuth token');
-        const rotated = typeof auth.getRefreshToken === 'function' ?
-            auth.getRefreshToken() : null;
-        if (rotated && rotated !== record.tokens.refresh_token)
-            save_credentials(provider,Object.assign({},record,{
-                tokens:Object.assign({},record.tokens,{refresh_token:rotated})
-            }));
-        return token;
+        if (/^(Cloud login requires optional package|Could not refresh Google OAuth token|Could not refresh Dropbox OAuth token|OneDrive login expired|Could not read OS credential store|OS keyring required|Could not write OS credential store)/.test(error.message))
+            throw error;
+        throw new Error('Could not refresh '+provider+
+            ' credentials. Run: node cli.js auth login '+provider);
     }
-    const msal = optional_dependency('@azure/msal-node');
-    const app = new msal.PublicClientApplication({
-        auth:{clientId:record.clientId,authority:'https://login.microsoftonline.com/common'}
-    });
-    app.getTokenCache().deserialize(record.tokenCache);
-    const accounts = await app.getTokenCache().getAllAccounts();
-    if (!accounts.length) throw new Error('OneDrive login expired. Run auth login onedrive');
-    const result = await app.acquireTokenSilent({scopes:CLOUD_SCOPES.onedrive,
-        account:accounts[0]});
-    record.tokenCache = app.getTokenCache().serialize();
-    save_credentials('onedrive',record);
-    return result.accessToken;
 }
 
 async function auth_command(args) {
@@ -259,9 +268,20 @@ async function auth_command(args) {
         console.log('Disconnected '+provider);
     } else if (action === 'login') {
 
-        if (provider === 'google-drive') await login_google_drive();
-        else if (provider === 'dropbox') await login_dropbox();
-        else await login_onedrive();
+        credential_store.ensure_available();
+        try {
+
+            if (provider === 'google-drive') await login_google_drive();
+            else if (provider === 'dropbox') await login_dropbox();
+            else await login_onedrive();
+        } catch (error) {
+
+            // Avoid surfacing raw OAuth SDK errors, which can include token responses.
+            if (/^(Cloud login requires optional package|Set RTDT_|Google did not issue|Dropbox did not issue|OAuth sign-in timed out|OAuth denied:)/.test(error.message))
+                throw error;
+            throw new Error('Could not connect '+provider+
+                '. Check provider application settings, callback and permissions.');
+        }
         console.log('Connected '+provider);
     } else {
 
