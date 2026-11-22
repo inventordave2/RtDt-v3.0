@@ -272,7 +272,7 @@ var rtdt_ui_browser = (function () {
             var selector=element('sceneRepoSelect');
             var option=selector.options[selector.selectedIndex];
             var scenePath=option && option.getAttribute('data-scene-path');
-            if (!scenePath || !/^samples\/[a-z0-9-]+\.scene$/.test(scenePath)) {
+            if (!scenePath || !/^samples\/[a-z0-9-]+\.scene(?:\.ya?ml)?$/.test(scenePath)) {
                 status('sceneStatus','Select a supported repository scene.','error');
                 return Promise.resolve(false);
             }
