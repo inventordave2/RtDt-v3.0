@@ -125,10 +125,10 @@ var rtdt_image_io_browser = (function () {
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     }
 
-    function export_canvas(canvas, format) {
+    function export_canvas(canvas, format, filename) {
 
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
-        var name = 'render.' + (format === 'jpeg' ? 'jpg' : 'png');
+        var name = filename || 'render.' + (format === 'jpeg' ? 'jpg' : 'png');
         if (canvas.toBlob) {
 
             canvas.toBlob(function (blob) {
@@ -146,7 +146,7 @@ var rtdt_image_io_browser = (function () {
         }
     }
 
-    function export_ppm(pixels, width, height) {
+    function export_ppm(pixels, width, height, filename) {
 
         var rows = ['P3', width + ' ' + height, '255'];
 
@@ -164,15 +164,15 @@ var rtdt_image_io_browser = (function () {
 
         download_blob(new Blob([rows.join('\n') + '\n'], {
             type: 'image/x-portable-pixmap'
-        }), 'render.ppm');
+        }), filename || 'render.ppm');
     }
 
-    function export_rgb_bmp(pixels, width, height) {
+    function export_rgb_bmp(pixels, width, height, filename) {
         if (typeof rtdt_colour === 'undefined')
             throw new Error('RtDt colour module has not loaded');
 
         var bytes = rtdt_colour.rgb_bmp(pixels, width, height);
-        download_blob(new Blob([bytes], {type: 'image/bmp'}), 'render.bmp');
+        download_blob(new Blob([bytes], {type: 'image/bmp'}), filename || 'render.bmp');
     }
 
     function export_indexed_bmp(pixels, width, height, palette_name) {
@@ -184,8 +184,17 @@ var rtdt_image_io_browser = (function () {
         download_blob(new Blob([bytes], {type: 'image/bmp'}), 'render-' + palette_name + '.bmp');
     }
 
+    function export_png(pixels,width,height,filename) {
+
+        if (typeof rtdt_png === 'undefined')
+            throw new Error('Shared RtDt PNG encoder is unavailable');
+        var bytes = rtdt_png.encode(pixels,width,height);
+        download_blob(new Blob([bytes],{type:'image/png'}),filename || 'render.png');
+    }
+
     return {parse_ppm: parse_ppm, decode_file: decode_file,
         download_blob: download_blob, export_canvas: export_canvas,
+        export_png: export_png,
         export_ppm: export_ppm, export_rgb_bmp: export_rgb_bmp,
         export_indexed_bmp: export_indexed_bmp};
 }());
