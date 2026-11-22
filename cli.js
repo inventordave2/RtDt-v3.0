@@ -7,6 +7,7 @@ const fs = require('fs');
 const vm = require('vm');
 const imageIO = require('./rtdt_image_io_node');
 const sceneAssetNode = require('./rtdt_scene_assets_node');
+const colourIO = require('./rtdt_colour');
 
 // ============================================================================
 // MODULE LOADING
@@ -62,6 +63,12 @@ try {
 	loadScript(path.join(repoRoot, 'rtdt_examples.js'));
 	loadScript(path.join(repoRoot, 'raytracer-core.js'));
 	loadScript(path.join(repoRoot, 'rtdt_render_core.js'));
+    global.rtdt_colour = colourIO;
+    loadScript(path.join(repoRoot, 'rtdt_png.js'));
+    loadScript(path.join(repoRoot, 'rtdt_animation_export.js'));
+    loadScript(path.join(repoRoot, 'rtdt_animation_destination.js'));
+    loadScript(path.join(repoRoot, 'rtdt_animation_batch.js'));
+
 	loadScript(path.join(repoRoot, 'rtdt_scene_assets.js'));
 	loadScript(path.join(repoRoot, 'rtdt_scene_format.js'));
 	loadScript(path.join(repoRoot, 'rtdt_scene_browser.js'));
@@ -122,6 +129,11 @@ const cliConfig = {
 	phyFile: null,
 	phyTime: null,
 	phyFrame: null,
+    batch: false,
+    destination: 'zip',
+    startFrame: 0,
+    endFrame: null,
+    zipFile: 'renders/animation.zip',
 	verbose: true
 };
 
@@ -140,6 +152,11 @@ OPTIONS:
   --phy FILE          Load .phy animation file (JSON version 1)
   --time SECONDS      Evaluate .phy at time t
   --frame INDEX       Evaluate .phy at frame INDEX (using timeline fps)
+  --batch             Render a complete range of .phy animation frames
+  --start-frame N     First batch frame, inclusive (default 0)
+  --end-frame N       Last batch frame, inclusive (default duration * fps - 1)
+  --destination TYPE  zip or folder (default zip)
+  --zip-file FILE     Output ZIP file (default renders/animation.zip)
   --width NUM         Image width in pixels (default: 500)
   --height NUM        Image height in pixels (default: 281; shortcut -H)
   --output FILE       Output filename (default: render.png)
@@ -237,6 +254,31 @@ function parseArguments(argv) {
                 cliConfig.sceneFile = cliConfig.sceneName;
             }
 		}
+        else if (arg === '--batch') {
+
+            cliConfig.batch = true;
+        }
+        else if (arg === '--start-frame' || arg === '--end-frame') {
+
+            if (i + 1 >= argv.length) throw new Error(arg + ' needs an integer');
+            var frameValue = Number(argv[++i]);
+            if (!Number.isInteger(frameValue) || frameValue < 0)
+                throw new Error(arg + ' requires a nonnegative integer');
+            if (arg === '--start-frame') cliConfig.startFrame = frameValue;
+            else cliConfig.endFrame = frameValue;
+        }
+        else if (arg === '--destination') {
+
+            if (i + 1 >= argv.length) throw new Error('--destination requires zip or folder');
+            cliConfig.destination = argv[++i];
+            if (cliConfig.destination !== 'zip' && cliConfig.destination !== 'folder')
+                throw new Error('Destination must be zip or folder');
+        }
+        else if (arg === '--zip-file') {
+
+            if (i + 1 >= argv.length) throw new Error('--zip-file requires a filename');
+            cliConfig.zipFile = argv[++i];
+        }
 		else if (arg === '--scene-file') {
 
             if (i + 1 >= argv.length) throw new Error('--scene-file requires a path');
@@ -378,6 +420,7 @@ function renderScene() {
 		initRaytracer(WIDTH, HEIGHT);
 		
         var declaredPhySource = null;
+        var batchAnimator = null, batchModel = null;
 		// Both frontends use the same declarative loader and asset model.
         if (cliConfig.sceneFile) {
 
@@ -430,12 +473,61 @@ function renderScene() {
 			var fps = phy.timeline && phy.timeline.fps || 30;
 			var t = cliConfig.phyTime !== null ? cliConfig.phyTime :
 				(cliConfig.phyFrame !== null ? cliConfig.phyFrame / fps : 0);
-			rtdt_aetherore.create_animator(phy, bindings).at(t);
+			batchAnimator = rtdt_aetherore.create_animator(phy, bindings);
+            batchModel = phy;
+            batchAnimator.at(t);
 			log('AetherOre: ' + (cliConfig.phyFile || declaredPhySource.path) + ' at t=' + t + 's');
 		}
 		else if (cliConfig.phyTime !== null || cliConfig.phyFrame !== null)
 			throw new Error('--time/--frame requires --phy');
 		
+        if (cliConfig.batch) {
+
+            if (!batchModel || !batchAnimator)
+                throw new Error('--batch requires a scene animation or --phy FILE');
+            if (cliConfig.phyFrame !== null || cliConfig.phyTime !== null)
+                throw new Error('Batch range uses --start-frame and --end-frame, not --time/--frame');
+            var frameRate = batchModel.timeline && batchModel.timeline.fps || 24;
+            var endFrame = cliConfig.endFrame === null ?
+                Math.round((batchModel.timeline && batchModel.timeline.duration || 0) * frameRate) - 1 :
+                cliConfig.endFrame;
+            var outDir = cliConfig.outputDir || 'renders/animation';
+            var sink = rtdt_animation_destination.create({
+                kind:cliConfig.destination,
+                write_file:function (name,bytes) {
+
+                    fs.mkdirSync(outDir,{recursive:true});
+                    fs.writeFileSync(path.join(outDir,name),Buffer.from(bytes));
+                },
+                output_archive:function (bytes) {
+
+                    var destinationFile = path.resolve(cliConfig.zipFile);
+                    fs.mkdirSync(path.dirname(destinationFile),{recursive:true});
+                    fs.writeFileSync(destinationFile,Buffer.from(bytes));
+                    log('ZIP written: '+destinationFile);
+                }
+            });
+            return rtdt_animation_batch.run({
+                sink:sink, fps:frameRate, width:cliConfig.width,height:cliConfig.height,
+                startFrame:cliConfig.startFrame,endFrame:endFrame,
+                render_frame:function (index,time) {
+
+                    batchAnimator.at(time);
+                    var batchWorld = rtdt_render_core.create_world(RtDtState.scene);
+                    return rtdt_render_core.render_pixels(batchWorld,RtDtState.scene.c,
+                        cliConfig.width,cliConfig.height,cliConfig.quality);
+                },
+                on_progress:function (done,total) {
+
+                    if (done === 1 || done % 24 === 0 || done === total)
+                        log('Animation frames: '+done+'/'+total);
+                }
+            }).then(function (result) {
+
+                log('AetherOre batch completed: '+result.manifest.frames.length+' frames');
+            });
+        }
+
 		// Create world for rendering
 		const renderWorld = rtdt_render_core.create_world(RtDtState.scene);
 		
@@ -487,12 +579,12 @@ function writeRenderImage(filename, pixels) {
         ' (' + (result.bytes/1024).toFixed(1) + ' KB)');
 }
 
-function main() {
+async function main() {
 
 	try {
 	
 		parseArguments(process.argv);
-		renderScene();
+		await renderScene();
 		process.exit(0);
 	} catch (e) {
 	
