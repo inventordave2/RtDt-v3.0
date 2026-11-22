@@ -11,7 +11,7 @@
     "start": "node cli.js --help",
     "render": "node cli.js --scene scene1 --output render.png",
     "render:preview": "node cli.js --scene scene1 --width 150 --height 84 --output preview.png",
-    "test": "node tests/scene-render-smoke.test.js && node tests/scene-expressions.test.js && node tests/rgb-bmp.test.js && node tests/scene-assets-layout.test.js && node tests/cli-image-formats.test.js",
+    "test": "node tests/scene-render-smoke.test.js && node tests/scene-expressions.test.js && node tests/rgb-bmp.test.js && node tests/scene-assets-layout.test.js && node tests/cli-image-formats.test.js && node tests/scene-cli-parity.test.js",
     "test:scene-expressions": "node tests/scene-expressions.test.js",
     "test:scene-assets": "node tests/scene-assets-layout.test.js"
   },
