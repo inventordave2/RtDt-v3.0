@@ -23,6 +23,7 @@ var rtdt_ui_browser = (function () {
     var export_cancelled = false;
     var packFpsOverride = null;
     var packZipFilename = null;
+    var packStillFilename = null;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -359,6 +360,8 @@ var rtdt_ui_browser = (function () {
         packFpsOverride = pack.render.fps || null;
         packZipFilename = pack.output.destination === 'zip' ?
             pack.output.path.split('/').pop() : null;
+        packStillFilename = pack.output.destination === 'file' ?
+            pack.output.path.split('/').pop() : null;
         if (pack.render.frames) {
 
             if (!phy_model)
@@ -497,6 +500,7 @@ var rtdt_ui_browser = (function () {
         });
         packFpsOverride = null;
         packZipFilename = null;
+        packStillFilename = null;
         if (running) {
             status('sceneStatus', 'Stop rendering before changing scene.', 'error');
             return Promise.resolve(false);
@@ -1293,12 +1297,14 @@ var rtdt_ui_browser = (function () {
 
         try {
 
-            if (format === 'png' || format === 'jpeg')
-                rtdt_image_io_browser.export_canvas(element('canvas'), format);
+            if (format === 'png')
+                rtdt_image_io_browser.export_png(pixels,WIDTH,HEIGHT,packStillFilename);
+            else if (format === 'jpeg')
+                rtdt_image_io_browser.export_canvas(element('canvas'),format,packStillFilename);
             else if (format === 'bmp')
-                rtdt_image_io_browser.export_rgb_bmp(pixels, WIDTH, HEIGHT);
+                rtdt_image_io_browser.export_rgb_bmp(pixels,WIDTH,HEIGHT,packStillFilename);
             else if (format === 'ppm')
-                rtdt_image_io_browser.export_ppm(pixels, WIDTH, HEIGHT);
+                rtdt_image_io_browser.export_ppm(pixels,WIDTH,HEIGHT,packStillFilename);
             else if (format === 'c64' || format === 'ansi256' || format === 'gray8')
                 rtdt_image_io_browser.export_indexed_bmp(pixels, WIDTH, HEIGHT, format);
             else
