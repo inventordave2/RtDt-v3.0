@@ -80,7 +80,7 @@ var rtdt_pack = (function () {
         var scene = safe_path(model.scene,'scene');
         exact_type(scene,/\.scene(?:\.ya?ml)?$/i,'Scene');
         var phy = null;
-        if (model.phy !== undefined) {
+        if (model.phy !== undefined && model.phy !== null) {
 
             phy = safe_path(model.phy,'animation');
             exact_type(phy,/\.phy$/i,'Animation');
@@ -122,11 +122,11 @@ var rtdt_pack = (function () {
         integer(quality,1,20,'render.quality');
         if (width*height > 4000000)
             throw new Error('Render resolution exceeds 4 million pixels');
-        var fps = render.fps;
+        var fps = render.fps === null ? undefined : render.fps;
         if (fps !== undefined && (!Number.isFinite(fps) || fps <= 0 || fps > 240))
             throw new Error('render.fps must be between 0 and 240');
         var frames = null;
-        if (render.frames !== undefined) {
+        if (render.frames !== undefined && render.frames !== null) {
 
             if (!is_object(render.frames)) throw new Error('render.frames must be an object');
             known_keys(render.frames,['start','end'],'frames');
@@ -167,7 +167,7 @@ var rtdt_pack = (function () {
                 !(format === 'jpg' && match[1].toLowerCase() === 'jpeg')))
                 throw new Error('Output filename extension must match output.format');
         }
-        return {version:1,name:model.name || '',scene:scene,phy:phy,
+        return {version:1,name:model.name || undefined,scene:scene,phy:phy,
             assets:references,render:{width:width,height:height,quality:quality,
                 fps:fps,frames:frames},
             output:{destination:destination,path:outputPath,format:format}};
