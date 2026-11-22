@@ -1,0 +1,92 @@
+name: Verify RtDt features
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/verify-features.yml'
+      - 'package.json'
+      - 'cli.js'
+      - 'webapp.html'
+      - 'rtdt_*.js'
+      - 'raytracer-core.js'
+      - 'tests/**'
+      - 'samples/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-features-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-suite:
+    name: Node.js ${{ matrix.node }} unit, CLI, pack and storage tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install runtime dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check primary source syntax
+        run: |
+          node --check cli.js
+          node --check rtdt_pack.js
+          node --check rtdt_pack_lint_node.js
+          node --check rtdt_animation_batch.js
+          node --check rtdt_cloud_storage.js
+          node --check rtdt_cloud_auth_browser.js
+          node --check rtdt_cloud_auth_node.js
+          node --check rtdt_ui_browser_20261118.js
+      - name: Test core rendering, CLI, RDT, PNG/ZIP, cloud mocks, browser adapters
+        run: npm test
+
+  animation-batch:
+    name: CLI 192-frame ZIP render and motion verification
+    needs: node-suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install runtime dependencies
+        run: npm install --no-audit --no-fund
+      - name: Render 192-frame AetherOre ZIP and inspect every PNG
+        run: npm run test:animation:full
+
+  browser:
+    name: Chromium hosted-scene and frame export smoke
+    needs: node-suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install runtime dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install optional browser test tooling
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Exercise actual WebApp in headless Chromium
+        run: npm run test:browser
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtdt-browser-failure
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
