@@ -110,13 +110,12 @@ async function main() {
         assert.match(await page.locator('#phyImportIndicator').innerText(),
             /AetherOre animation loaded/);
 
-        // The same shared animator and PNG encoding must produce a downloadable ZIP.
-        await page.locator('#phyBatchTools').evaluate(function (node) {
-
-            node.open = true;
-        });
+        // Open the actual disclosure panels before editing their inputs.
+        await page.locator('details.rtdt-render-settings > summary').click();
+        await page.locator('details.rtdt-animation-tools > summary').click();
+        await page.locator('#phyBatchTools > summary').click();
         await page.fill('#renderWidth','12');
-        await page.fill('#renderHeight','8');
+        await page.fill('#renderHeight','10');
         await page.fill('#phyExportStart','0');
         await page.fill('#phyExportEnd','1');
         await page.selectOption('#phyExportDestination','zip');
@@ -132,12 +131,12 @@ async function main() {
         const manifest = JSON.parse(zip['manifest.json'].toString('utf8'));
         assert.equal(manifest.frames.length,2);
         assert.equal(manifest.width,12);
-        assert.equal(manifest.height,8);
+        assert.equal(manifest.height,10);
         for (const name of ['frame-0000.png','frame-0001.png']) {
 
             const frame = PNG.sync.read(zip[name],{checkCRC:true});
             assert.equal(frame.width,12);
-            assert.equal(frame.height,8);
+            assert.equal(frame.height,10);
         }
         await page.waitForFunction(function () {
 
