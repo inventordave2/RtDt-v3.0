@@ -132,20 +132,8 @@ function renderSceneSync(world, camera, renderQuality) {
 	console.log("Rendering " + WIDTH + "x" + HEIGHT + "...");
 	console.time("render");
 	
-	var pixels = [];
-	
-	for (var y = 0; y < HEIGHT; y++) {
-		if (y % 10 === 0 && typeof console !== 'undefined') {
-			console.log("Rendering line " + y + "/" + HEIGHT + "...");
-		}
-		
-		for (var x = 0; x < WIDTH; x++) {
-			var r = camera.ray_for_pixel(x, y);
-			var c = color_at(world, r, renderQuality || 1);
-			
-			pixels.push(c);
-		}
-	}
+	var pixels = rtdt_render_core.render_pixels(
+        world, camera, WIDTH, HEIGHT, renderQuality || 1);
 	
 	console.timeEnd("render");
 	console.log("Render complete");
