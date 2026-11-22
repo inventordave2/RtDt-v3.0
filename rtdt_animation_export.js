@@ -1,6 +1,4 @@
-/* Browser-only destinations for canonical RtDt animation frames.
- * No image transformation: inputs are bytes from rtdt_png.encode().
- */
+/* Portable ZIP builder for canonical RtDt animation frames, shared by CLI and WebApp. */
 var rtdt_animation_export = (function () {
 
     var MAX_ZIP_BYTES = 512 * 1024 * 1024;
@@ -77,68 +75,17 @@ var rtdt_animation_export = (function () {
         footer.setUint16(10,entries.length,true);
         footer.setUint32(12,directorySize,true);
         footer.setUint32(16,offset,true);
-        return new Blob(chunks.concat(central,[end]),{type:'application/zip'});
+        var output = new Uint8Array(offset+directorySize+end.length);
+        var cursor = 0;
+        chunks.concat(central,[end]).forEach(function (part) {
+
+            output.set(part,cursor);
+            cursor += part.length;
+        });
+        return output;
     }
 
-    function download_blob(blob, filename) {
-
-        var url = URL.createObjectURL(blob);
-        var anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); },10000);
-    }
-
-    function create_sink(kind, directory) {
-
-        if (kind !== 'zip' && kind !== 'folder')
-            throw new Error('Select ZIP or local folder');
-        if (kind === 'folder' && !directory)
-            throw new Error('No writable output folder selected');
-        var files = [], written = 0, seen = {};
-        return {
-            add: function (name, bytes) {
-
-                if (!/^(frame-[0-9]{4,8}\.png|manifest\.json)$/.test(name) || seen[name])
-                    return Promise.reject(new Error('Invalid or duplicated frame: '+name));
-                if (!(bytes instanceof Uint8Array))
-                    return Promise.reject(new Error('Expected encoded bytes'));
-                if (kind === 'zip' && written+bytes.length > MAX_ZIP_BYTES)
-                    return Promise.reject(new Error('ZIP exceeds 512 MiB; use a local folder instead'));
-                seen[name] = true;
-                written += bytes.length;
-                if (kind === 'zip') {
-
-                    files.push({name:name,bytes:bytes});
-                    return Promise.resolve();
-                }
-                return directory.getFileHandle(name,{create:true}).then(function (handle) {
-
-                    return handle.createWritable();
-                }).then(function (stream) {
-
-                    return stream.write(bytes).then(function () {
-
-                        return stream.close();
-                    },function (error) {
-
-                        return stream.abort().then(function () { throw error; });
-                    });
-                });
-            },
-            finish: function () {
-
-                return kind === 'zip' ? zip_archive(files) : null;
-            },
-            bytes_written: function () { return written; }
-        };
-    }
-
-    return {crc32:crc32,zip_archive:zip_archive,download_blob:download_blob,
-        create_sink:create_sink};
+    return {crc32:crc32,zip_archive:zip_archive};
 }());
 if (typeof module !== 'undefined' && module.exports)
     module.exports = rtdt_animation_export;
