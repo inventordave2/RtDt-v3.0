@@ -87,8 +87,8 @@ var rtdt_cloud_auth_browser = (function () {
             headers:{'Content-Type':'application/x-www-form-urlencoded'},
             body:new URLSearchParams(body).toString()
         });
-        if (!response.ok) throw new Error('OAuth token exchange failed ('+
-            response.status+'): '+(await response.text()).slice(0,240));
+        if (!response.ok) throw new Error('OAuth token exchange failed (HTTP '+
+            response.status+'). Check the OAuth client and redirect configuration.');
         var token = await response.json();
         if (!token.access_token) throw new Error('OAuth did not return an access token');
         token.expires_at = Date.now() + (Number(token.expires_in) || 3600) * 1000;
@@ -213,7 +213,8 @@ var rtdt_cloud_auth_browser = (function () {
             client_id:app_clients[provider],refresh_token:token.refresh_token};
         if (provider === 'onedrive') params.scope = GRAPH_SCOPE;
         var refreshed = await json_token(endpoint,params);
-        sessions[provider] = refreshed;
+        // Refresh responses need not repeat the long-lived refresh token.
+        sessions[provider] = Object.assign({},token,refreshed);
         return refreshed.access_token;
     }
 
