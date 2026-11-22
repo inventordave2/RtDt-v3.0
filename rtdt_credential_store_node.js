@@ -120,30 +120,38 @@ function ensure_available() {
 
 function migrate_legacy() {
 
-    if (!fs.existsSync(LEGACY_FILE)) return;
+    const existing = [LEGACY_FILE,FALLBACK_FILE].filter(function (file) {
+
+        return fs.existsSync(file);
+    });
+    if (!existing.length) return;
     const keyring = optional_keyring();
     if (!keyring) {
 
         if (allow_plaintext()) return;
-        throw new Error('Legacy plaintext credentials detected. '+fallback_notice());
+        throw new Error('Plaintext credentials detected. '+fallback_notice());
     }
-    const legacy = read_plaintext(LEGACY_FILE);
     try {
 
-        for (const provider of PROVIDERS) {
+        // Write every provider before deleting any source credential file.
+        for (const file of existing) {
 
-            if (!legacy[provider]) continue;
-            const entry = new keyring.Entry(VAULT_SERVICE,provider);
-            if (!entry.getPassword())
-                entry.setPassword(JSON.stringify(legacy[provider]));
+            const cached = read_plaintext(file);
+            for (const provider of PROVIDERS) {
+
+                if (!cached[provider]) continue;
+                const entry = new keyring.Entry(VAULT_SERVICE,provider);
+                if (!entry.getPassword())
+                    entry.setPassword(JSON.stringify(cached[provider]));
+            }
         }
-        // Delete only once all migrated records have been written successfully.
-        fs.unlinkSync(LEGACY_FILE);
+        for (const file of existing)
+            fs.unlinkSync(file);
     } catch (error) {
 
         if (allow_plaintext()) return;
-        throw new Error('Could not migrate legacy credentials into the OS keyring. '+
-            'The original file has been preserved. '+fallback_notice());
+        throw new Error('Could not migrate plaintext credentials into the OS keyring. '+
+            'The source files have been preserved where possible. '+fallback_notice());
     }
 }
 
