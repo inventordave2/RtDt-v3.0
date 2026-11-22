@@ -112,7 +112,11 @@ async function main() {
 
         // Open the actual disclosure panels before editing their inputs.
         await page.locator('details.rtdt-render-settings > summary').click();
-        await page.locator('details.rtdt-animation-tools > summary').click();
+        // Scene import may have opened the timeline automatically; do not toggle it shut.
+        await page.locator('details.rtdt-animation-tools').evaluate(function (node) {
+
+            node.open = true;
+        });
         await page.locator('#phyBatchTools > summary').click();
         await page.fill('#renderWidth','12');
         await page.fill('#renderHeight','10');
