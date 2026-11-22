@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RtDt cloud authorisation</title>
+</head>
+<body>
+    <p id="status">Completing RtDt cloud authorisation…</p>
+    <script>
+    (function () {
+
+        var params = new URLSearchParams(window.location.search);
+        var state = params.get('state');
+        var code = params.get('code');
+        var error = params.get('error');
+        window.history.replaceState({},document.title,window.location.pathname);
+        if (!window.opener || !state || (!code && !error)) {
+
+            document.getElementById('status').textContent =
+                'Authorisation could not be completed. Close this window and try again.';
+            return;
+        }
+        window.opener.postMessage({type:'rtdt-oauth-code',state:state,
+            code:code,error:error},window.location.origin);
+        document.getElementById('status').textContent =
+            'RtDt received the authorisation response. You may close this window.';
+        window.close();
+    }());
+    </script>
+</body>
+</html>
