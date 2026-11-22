@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const vm = require('vm');
 const imageIO = require('./rtdt_image_io_node');
+const sceneAssetNode = require('./rtdt_scene_assets_node');
 
 // ============================================================================
 // MODULE LOADING
@@ -60,6 +61,10 @@ try {
 	loadScript(path.join(repoRoot, 'rtdt_pattern.js'));
 	loadScript(path.join(repoRoot, 'rtdt_examples.js'));
 	loadScript(path.join(repoRoot, 'raytracer-core.js'));
+	loadScript(path.join(repoRoot, 'rtdt_render_core.js'));
+	loadScript(path.join(repoRoot, 'rtdt_scene_assets.js'));
+	loadScript(path.join(repoRoot, 'rtdt_scene_browser.js'));
+	loadScript(path.join(repoRoot, 'rtdt_image_io_browser.js'));
 	loadScript(path.join(repoRoot, 'rtdt_objfile-node.js'));
 	loadScript(path.join(repoRoot, 'rtdt_ap_math.js'));
 	loadScript(path.join(repoRoot, 'rtdt_aetherore.js'));
@@ -103,6 +108,7 @@ try {
 const cliConfig = {
 
 	sceneName: 'scene1',
+    sceneFile: null,
 	width: 500,
 	height: 281,
 	outputFile: 'render.png',
@@ -128,7 +134,8 @@ USAGE:
   node cli.js [OPTIONS]
 
 OPTIONS:
-  --scene NAME        Scene to render (default: scene1)
+  --scene NAME        Built-in scene name (default: scene1)
+  --scene-file FILE   JSON v1 .scene file with declared local assets
   --phy FILE          Load .phy animation file (JSON version 1)
   --time SECONDS      Evaluate .phy at time t
   --frame INDEX       Evaluate .phy at frame INDEX (using timeline fps)
@@ -224,7 +231,16 @@ function parseArguments(argv) {
 				process.exit(1);
 			}
 			cliConfig.sceneName = argv[++i];
+            if (/\\.scene$/i.test(cliConfig.sceneName)) {
+
+                cliConfig.sceneFile = cliConfig.sceneName;
+            }
 		}
+		else if (arg === '--scene-file') {
+
+            if (i + 1 >= argv.length) throw new Error('--scene-file requires a path');
+            cliConfig.sceneFile = argv[++i];
+        }
 		else if (arg === '--phy' || arg === '--time' || arg === '--frame') {
 		
 			if (i + 1 >= argv.length)
@@ -349,7 +365,7 @@ function renderScene() {
 
 	try {
 	
-		log('Rendering scene: ' + cliConfig.sceneName);
+		log('Rendering scene: ' + (cliConfig.sceneFile || cliConfig.sceneName));
 		log('Resolution: ' + cliConfig.width + 'x' + cliConfig.height);
 		log('Quality: ' + cliConfig.quality);
 		log('');
@@ -361,15 +377,28 @@ function renderScene() {
 		// Initialize raytracer
 		initRaytracer(WIDTH, HEIGHT);
 		
-		// Get and run the scene function
-		if (typeof scenes === 'undefined' || typeof scenes[cliConfig.sceneName] !== 'function') {
-		
-			const available = typeof scenes === 'object' ? Object.keys(scenes).join(', ') : 'none';
-			throw new Error('Scene not found: ' + cliConfig.sceneName + '. Available: ' + available);
-		}
-		
-		const sceneFunction = scenes[cliConfig.sceneName];
-		sceneFunction();
+		// Both frontends use the same declarative loader and asset model.
+        if (cliConfig.sceneFile) {
+
+            const sceneFile = path.resolve(cliConfig.sceneFile);
+            const model = rtdt_scene_browser.parse(fs.readFileSync(sceneFile,'utf8'));
+            const resolved = sceneAssetNode.resolve(
+                model,sceneFile,repoRoot,rtdt_scene_assets,rtdt_image_io_browser);
+            rtdt_scene_browser.load(model,WIDTH,HEIGHT,resolved);
+            for (const entry of resolved.entries) {
+
+                if (entry.kind === 'image' && resolved.files['image:'+entry.path])
+                    RtDtState.scene.PPM[entry.path] = resolved.files['image:'+entry.path];
+            }
+        } else {
+
+            if (typeof scenes === 'undefined' || typeof scenes[cliConfig.sceneName] !== 'function') {
+
+                const available = typeof scenes === 'object' ? Object.keys(scenes).join(', ') : 'none';
+                throw new Error('Scene not found: ' + cliConfig.sceneName + '. Available: ' + available);
+            }
+            scenes[cliConfig.sceneName]();
+        }
 		
 		// RtDtState.scene.o should now contain the scene
 		if (!RtDtState.scene.o || !RtDtState.scene.o.s) {
@@ -403,10 +432,7 @@ function renderScene() {
 			throw new Error('--time/--frame requires --phy');
 		
 		// Create world for rendering
-		const renderWorld = new world();
-		renderWorld.light = RtDtState.scene.l;
-		renderWorld.objects = RtDtState.scene.o.s;
-		renderWorld.background = RtDtState.scene.background || colour(0,0,0);
+		const renderWorld = rtdt_render_core.create_world(RtDtState.scene);
 		
 		// Render synchronously
 		const startTime = Date.now();
