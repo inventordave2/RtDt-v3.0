@@ -237,6 +237,49 @@ async function main() {
                 document.querySelector('#phyExportStatus').textContent);
         });
 
+        // A still-image .rdt job uses its requested filename and canonical PNG bytes.
+        localPack.render = {width:12,height:10,quality:1};
+        localPack.output = {destination:'file',path:'out/still-from-pack.png',
+            format:'png'};
+        fs.writeFileSync(path.join(folder,'project.rdt'),
+            JSON.stringify(localPack,null,2));
+        await page.locator('#packLocalFiles').setInputFiles(folder);
+        await page.locator('#btnLoadScene').click();
+        await page.waitForFunction(function () {
+
+            const status = document.querySelector('#packStatus');
+            return status && /single-image render ready|Pack failed/.test(
+                status.textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#packStatus').innerText(),
+            /single-image render ready/);
+        await page.locator('#btnRender').click();
+        await page.waitForFunction(function () {
+
+            const status = document.querySelector('#renderStatus');
+            return status && /Render complete|Render failed/.test(status.textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#renderStatus').innerText(),/Render complete/);
+        await page.locator('details.section-files').evaluate(function (node) {
+
+            node.open = true;
+        });
+        const stillDownload = page.waitForEvent('download',{timeout:60000});
+        await page.locator('#btnDownload').click();
+        const browserStill = await stillDownload;
+        assert.equal(browserStill.suggestedFilename(),'still-from-pack.png');
+        const browserStillPath = path.join(temp,'browser-still.png');
+        await browserStill.saveAs(browserStillPath);
+        const {spawnSync} = require('node:child_process');
+        const nodeStill = spawnSync(process.execPath,
+            [path.join(ROOT,'cli.js'),'--job',path.join(folder,'project.rdt')],{
+                cwd:ROOT,encoding:'utf8',timeout:60000
+            });
+        assert.equal(nodeStill.status,0,nodeStill.stdout+'\\n'+nodeStill.stderr);
+        assert.deepEqual(fs.readFileSync(browserStillPath),
+            fs.readFileSync(path.join(folder,'out','still-from-pack.png')),
+            'CLI and WebApp pack still PNGs must match byte-for-byte');
+
         assert.deepEqual(pageErrors,[],'Browser runtime errors: '+pageErrors.join('; '));
         await context.close();
         console.log('Chromium: scene + hosted/local RDT packs + AetherOre ZIP and cloud gate passed');
