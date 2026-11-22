@@ -181,7 +181,7 @@ async function create_writer(provider,remotePath,get_token) {
         const folder = await google_folder(token,segments);
         return async function (name,bytes) {
 
-            await google_upload(token,folder,name,bytes);
+            await google_upload(await get_token(provider),folder,name,bytes);
         };
     }
     if (provider === 'dropbox') {
@@ -189,13 +189,13 @@ async function create_writer(provider,remotePath,get_token) {
         const folder = await dropbox_folder(token,segments);
         return async function (name,bytes) {
 
-            await dropbox_upload(token,folder,name,bytes);
+            await dropbox_upload(await get_token(provider),folder,name,bytes);
         };
     }
     const folder = await graph_folder(token,segments);
     return async function (name,bytes) {
 
-        await graph_upload(token,folder,name,bytes);
+        await graph_upload(await get_token(provider),folder,name,bytes);
     };
 }
 
