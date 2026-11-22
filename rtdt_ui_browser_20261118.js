@@ -343,8 +343,7 @@ var rtdt_ui_browser = (function () {
                 throw new Error('Scene did not create a group of shapes.');
 
             scene_loaded = true;
-            phy_model = null;
-            phy_animator = null;
+            reset_phy_import();
             ++scene_load_token;
             reset_bvh_status();
             var phyFileControl = element('phyFile');
@@ -405,6 +404,32 @@ var rtdt_ui_browser = (function () {
         }
     }
 
+    function phy_import_indicator(message, details, state) {
+
+        var node = element('phyImportIndicator');
+        if (!node) return;
+        node.className = 'rtdt-phy-indicator' +
+            (state === 'loaded' ? ' is-loaded' : state === 'error' ? ' is-error' : '');
+        node.replaceChildren();
+        var heading = document.createElement('strong');
+        heading.textContent = message;
+        node.appendChild(heading);
+        if (details) {
+
+            var detail = document.createElement('small');
+            detail.textContent = details;
+            node.appendChild(detail);
+        }
+    }
+
+    function reset_phy_import() {
+
+        phy_model = null;
+        phy_animator = null;
+        phy_import_indicator('○ No AetherOre animation loaded',
+            'Load a .phy file after loading the scene.', 'empty');
+    }
+
     function use_phy_source(source, filename) {
         if (!scene_loaded)
             throw new Error('Load a scene before its .phy animation.');
@@ -418,13 +443,40 @@ var rtdt_ui_browser = (function () {
             element('phyEndTime').value = String(model.timeline.duration);
         element('phyTime').value = '0';
         apply_phy();
-        status('phyStatus', 'Loaded AetherOre ' + filename + ' at t=0.', 'success');
+        var tracks = model.objects || [], formulaCount = 0, keyframeCount = 0, lastTime = 0;
+        tracks.forEach(function (track) {
+
+            Object.keys(track.motion || {}).forEach(function (channel) {
+
+                var values = track.motion[channel];
+                if (!Array.isArray(values) || !values.length) return;
+                if (typeof values[0] === 'string' || typeof values[0] === 'number')
+                    formulaCount++;
+                else {
+
+                    keyframeCount++;
+                    lastTime = Math.max(lastTime, values[values.length - 1].time);
+                }
+            });
+        });
+        var fps = model.timeline && model.timeline.fps || 30;
+        var duration = model.timeline && model.timeline.duration || lastTime;
+        if (duration > 0) element('phyEndTime').value = String(duration);
+        var summary = tracks.length + ' object track(s) · ' + formulaCount +
+            ' formula channel(s) · ' + keyframeCount + ' keyframed channel(s) · ' +
+            fps + ' FPS' + (duration > 0 ? ' · ' + duration + ' s' : '');
+        phy_import_indicator('✓ AetherOre animation loaded: ' + filename,
+            summary + ' · Ready to apply poses or play.', 'loaded');
+        var timeline = element('phyTime').closest('details');
+        if (timeline) timeline.open = true;
+        status('phyStatus', 'Verified and imported ' + filename + '. ' + summary, 'success');
     }
 
     var repository_samples = {
         scene: {path:'samples/orbit.scene', kind:'scene'},
         rocket: {path:'samples/rocket-to-rainbow-planet.scene', kind:'scene'},
         phy: {path:'samples/orbit/orbit.phy', kind:'phy'},
+        'phy-formula': {path:'samples/orbit/orbit-formula.phy', kind:'phy'},
         obj: {path:'obj/pyramid.obj', kind:'obj'},
         jpeg: {path:'img/earthmap1k.jpg', kind:'image'}
     };
@@ -470,7 +522,7 @@ var rtdt_ui_browser = (function () {
             if (token!==scene_load_token) return false;
             rtdt_scene_browser.load(model,Number(element('renderWidth').value),
                 Number(element('renderHeight').value),resolved);
-            scene_loaded=true; phy_model=null; phy_animator=null;
+            scene_loaded=true; reset_phy_import();
             report_bvh_status();
             resolved.entries.forEach(function(entry) {
                 if (entry.kind==='image' && resolved.files['image:'+entry.path]) {
@@ -512,8 +564,7 @@ var rtdt_ui_browser = (function () {
         RtDtState.meshImport.objFileContents = source;
         parse_obj_file();
         scene_loaded = true;
-        phy_model = null;
-        phy_animator = null;
+        reset_phy_import();
         pixels = null;
         ++scene_load_token;
         reset_bvh_status();
@@ -588,6 +639,8 @@ var rtdt_ui_browser = (function () {
             }
             return ok;
         }).catch(function (error) {
+            if (element('importKind').value === 'phy')
+                phy_import_indicator('✕ Animation import failed', error.message, 'error');
             status('repoSampleStatus',error.message,'error');
             return false;
         }).then(function (ok) {
@@ -673,11 +726,13 @@ var rtdt_ui_browser = (function () {
                 use_phy_source(reader.result,file.name);
             } catch (error) {
 
+                phy_import_indicator('✕ Animation import failed', error.message, 'error');
                 status('phyStatus', error.message, 'error');
             }
         };
         reader.onerror = function () {
 
+            phy_import_indicator('✕ Animation import failed', 'Could not read .phy file.', 'error');
             status('phyStatus', 'Could not read .phy file.', 'error');
         };
         reader.readAsText(file);
