@@ -12,7 +12,8 @@ const modules = [
   'rtdt_material.js', 'rtdt_world.js', 'rtdt_shade.js',
   'rtdt_p+e.js', 'rtdt_pattern.js', 'rtdt_colour.js',
   'rtdt_examples.js', 'raytracer-core.js', 'rtdt_objfile.js',
-  'rtdt_scene_assets.js', 'rtdt_scene_browser.js', 'rtdt_aetherore.js'
+  'rtdt_render_core.js', 'rtdt_scene_assets.js', 'rtdt_scene_format.js',
+  'rtdt_scene_browser.js', 'rtdt_aetherore.js'
 ];
 const sandbox = {
   console: { log() {}, time() {}, timeEnd() {} },
