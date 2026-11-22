@@ -21,8 +21,8 @@ var rtdt_ui_browser = (function () {
     var playback_fps = 24;
     var export_active = false;
     var export_cancelled = false;
-    var pack_fps_override = null;
-    var pack_zip_filename = null;
+    var packFpsOverride = null;
+    var packZipFilename = null;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -179,7 +179,7 @@ var rtdt_ui_browser = (function () {
         var depth = Number(element('renderQuality').value);
         var start = Number(element('phyExportStart').value);
         var end = Number(element('phyExportEnd').value);
-        var fps = pack_fps_override || (phy_model.timeline && phy_model.timeline.fps) || 24;
+        var fps = packFpsOverride || (phy_model.timeline && phy_model.timeline.fps) || 24;
         var destination = element('phyExportDestination').value;
         if (!Number.isInteger(depth) || depth < 1 || depth > 20) {
 
@@ -200,7 +200,7 @@ var rtdt_ui_browser = (function () {
                 throw new Error('Connect your '+destination+' account before exporting');
             // Ask for local folder permission from this user gesture when needed.
             sink = await rtdt_animation_storage_browser.create(destination,
-                element('phyCloudFolder').value.trim(),pack_zip_filename);
+                element('phyCloudFolder').value.trim(),packZipFilename);
             if (running || playback_active || !scene_loaded)
                 throw new Error('Scene changed while selecting an output destination');
             export_active = true;
@@ -356,8 +356,8 @@ var rtdt_ui_browser = (function () {
         if (!ok) throw new Error('Pack scene could not be loaded');
         if (source.phyText !== null)
             use_phy_source(source.phyText,pack.phy);
-        pack_fps_override = pack.render.fps || null;
-        pack_zip_filename = pack.output.destination === 'zip' ?
+        packFpsOverride = pack.render.fps || null;
+        packZipFilename = pack.output.destination === 'zip' ?
             pack.output.path.split('/').pop() : null;
         if (pack.render.frames) {
 
@@ -495,8 +495,8 @@ var rtdt_ui_browser = (function () {
             status('sceneStatus','Pack failed: '+error.message,'error');
             return false;
         });
-        pack_fps_override = null;
-        pack_zip_filename = null;
+        packFpsOverride = null;
+        packZipFilename = null;
         if (running) {
             status('sceneStatus', 'Stop rendering before changing scene.', 'error');
             return Promise.resolve(false);
