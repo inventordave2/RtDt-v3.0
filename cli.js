@@ -232,7 +232,7 @@ function parseArguments(argv) {
 				process.exit(1);
 			}
 			cliConfig.sceneName = argv[++i];
-            if (/\\.scene$/i.test(cliConfig.sceneName)) {
+            if (/(?:\.scene(?:\.ya?ml)?|\.ya?ml)$/i.test(cliConfig.sceneName)) {
 
                 cliConfig.sceneFile = cliConfig.sceneName;
             }
@@ -366,7 +366,7 @@ function renderScene() {
 
 	try {
 	
-		log('Rendering scene: ' + (cliConfig.sceneFile || cliConfig.sceneName));
+            if (/(?:\.scene(?:\.ya?ml)?|\.ya?ml)$/i.test(cliConfig.sceneName)) {
 		log('Resolution: ' + cliConfig.width + 'x' + cliConfig.height);
 		log('Quality: ' + cliConfig.quality);
 		log('');
