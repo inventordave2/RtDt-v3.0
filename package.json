@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "jpeg-js": "0.4.4",
-    "color-name": "1.1.4"
+    "color-name": "1.1.4",
+    "pngjs": "7.0.0"
   }
 }
