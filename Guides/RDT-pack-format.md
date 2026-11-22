@@ -203,10 +203,49 @@ The linter validates pack structure and local dependency paths, **not**
 the visual correctness of a finished raytrace or the availability of
 a cloud account.
 
-**Execution status:** Pack v1 grammar and preflight validation are implemented.
-Direct execution of `.rdt` jobs through `--job` and the WebApp pack
-picker are planned integrations; until then, the CLI's existing
-`--scene-file`, `--phy` and batch options render the referenced files.
+## Execute an .rdt job
+
+The Node CLI validates a pack and its dependencies, then applies the
+manifest's scene, optional animation, resolution, quality, frame range,
+FPS and destination to the **existing shared rendering pipeline**:
+
+```sh
+node cli.js --job samples/orbit.rdt
+```
+
+The example writes `samples/orbit-animation.zip`. Output paths are
+resolved relative to the `.rdt` manifest's directory, not the shell's
+current directory. Single-image packs write the requested still-image
+format; batch packs write numbered PNG frames and `manifest.json` to
+a ZIP, local directory or an authenticated cloud directory.
+
+The `--job` command does not accept additional rendering flags: edit
+the manifest to change the settings, or use the ordinary CLI flags without
+`--job`. Run `--lint-pack` to preflight a pack without generating images.
+
+## Open an .rdt pack in the WebApp
+
+In `webapp.html`, choose **Scene collection → RtDt pack (.rdt)**.
+Choose either **Featured .rdt pack** (the included Orbit Studio example)
+or **My local pack folder**. For a local pack, select the whole directory
+containing the root `.rdt` manifest and all referenced dependencies.
+
+The WebApp preflights the declared dependencies using the shared v1
+manifest grammar, loads the scene through the existing scene loader, imports
+the `.phy` pose and fills in resolution, quality, frame range, destination
+and ZIP filename. For a batch, expand **Export animation frames** and
+select **Export animation frames** to start the job. For a still image,
+use the normal render and image-export controls.
+
+Local folder selection uses the browser's directory input and does not
+upload your files. A selected folder must contain exactly one root-level
+`.rdt` file; missing required dependencies block loading. Files named by
+`.scene` are resolved relative to that scene; explicit pack asset paths
+are resolved relative to the `.rdt` file.
+
+Cloud output destinations continue to require an explicit OAuth login.
+For large exports, choose a folder or a cloud target rather than the
+memory-limited browser ZIP writer.
 
 ## Security and advanced features
 
