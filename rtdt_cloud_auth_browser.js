@@ -230,5 +230,6 @@ var rtdt_cloud_auth_browser = (function () {
     }
 
     return {connect:connect,connected:connected,disconnect:disconnect,
+        preload_google:google_script,
         get_access_token:get_access_token,redirect_uri:redirect_uri};
 }());
