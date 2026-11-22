@@ -34,8 +34,9 @@ async function request(url,token,options) {
     const response = await fetch(url,Object.assign({},opts,{headers}));
     if (!response.ok) {
 
-        const body = (await response.text()).slice(0,400);
-        const error = new Error('Cloud request failed ('+response.status+'): '+body);
+        // Never expose provider response bodies: they may contain account identifiers or tokens.
+        const error = new Error('Cloud request failed (HTTP '+response.status+'). ' +
+            'Check account permissions, destination path and network connectivity.');
         error.status = response.status;
         throw error;
     }
@@ -106,8 +107,7 @@ async function dropbox_folder(token,parts) {
             continue;
         }
         if (!response.ok)
-            throw new Error('Dropbox folder create failed ('+response.status+'): '+
-                (await response.text()).slice(0,400));
+            throw new Error('Dropbox folder create failed (HTTP '+response.status+').');
     }
     return directory;
 }
@@ -151,8 +151,7 @@ async function graph_folder(token,parts) {
             data = await response.json();
         } else {
 
-            throw new Error('OneDrive folder lookup failed ('+found.status+'): '+
-                (await found.text()).slice(0,400));
+            throw new Error('OneDrive folder lookup failed (HTTP '+found.status+').');
         }
         parent = data.id;
     }
