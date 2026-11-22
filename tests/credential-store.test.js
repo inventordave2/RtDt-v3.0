@@ -72,8 +72,14 @@ try {
     vault.delete_record('dropbox');
     assert.equal(fs.existsSync(cache),false);
 
+    vault.set_record('dropbox',secret);
+    assert.equal(fs.existsSync(cache),true,'Fallback file should exist temporarily');
     delete process.env.RTDT_ALLOW_PLAINTEXT_CREDENTIALS;
     keyringEnabled = true;
+    assert.deepEqual(vault.get_record('dropbox'),secret);
+    assert.equal(fs.existsSync(cache),false,
+        'Installing a usable OS keyring must migrate and remove fallback secrets');
+    vault.delete_record('dropbox');
     vault.set_record('google-drive',secret);
     assert.deepEqual(vault.get_record('google-drive'),secret);
     assert.equal(fs.existsSync(cache),false,'Keyring must not write token files');
