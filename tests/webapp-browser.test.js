@@ -100,10 +100,12 @@ async function main() {
         await page.waitForFunction(function () {
 
             const status = document.querySelector('#sceneStatus');
-            return status && (/Scene ready/.test(status.textContent) ||
-                /Scene failed/.test(status.textContent));
-        },{timeout:60000});
-        assert.match(await page.locator('#sceneStatus').innerText(),/Scene ready/);
+            return status && (/Scene loaded|Scene not loaded|Scene failed/.test(
+                status.textContent));
+        },null,{timeout:60000});
+        assert.match(await page.locator('#sceneStatus').innerText(),/Scene loaded/);
+        assert.match(await page.locator('#mainStatus').innerText(),
+            /Scene and assets loaded/);
         await page.locator('#phyImportIndicator').waitFor();
         assert.match(await page.locator('#phyImportIndicator').innerText(),
             /AetherOre animation loaded/);
