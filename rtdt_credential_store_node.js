@@ -141,6 +141,7 @@ function migrate_legacy() {
         fs.unlinkSync(LEGACY_FILE);
     } catch (error) {
 
+        if (allow_plaintext()) return;
         throw new Error('Could not migrate legacy credentials into the OS keyring. '+
             'The original file has been preserved. '+fallback_notice());
     }
@@ -159,7 +160,8 @@ function get_record(provider) {
             return serialized ? JSON.parse(serialized) : null;
         } catch (error) {
 
-            throw new Error('Could not read OS credential store for '+provider);
+            if (!allow_plaintext())
+                throw new Error('Could not read OS credential store for '+provider);
         }
     }
     if (!allow_plaintext()) return null;
@@ -181,10 +183,11 @@ function set_record(provider,credentials) {
             entry.setPassword(JSON.stringify(credentials));
         } catch (error) {
 
-            throw new Error('Could not write OS credential store for '+provider+
-                '. '+fallback_notice());
+            if (!allow_plaintext())
+                throw new Error('Could not write OS credential store for '+provider+
+                    '. '+fallback_notice());
         }
-        return;
+        if (!allow_plaintext()) return;
     }
     if (!allow_plaintext()) throw new Error(fallback_notice());
     const cache = read_plaintext(FALLBACK_FILE);
@@ -203,7 +206,8 @@ function delete_record(provider) {
             if (entry.getPassword()) entry.deletePassword();
         } catch (error) {
 
-            throw new Error('Could not remove OS credential for '+provider);
+            if (!allow_plaintext())
+                throw new Error('Could not remove OS credential for '+provider);
         }
     }
     for (const file of [FALLBACK_FILE,LEGACY_FILE]) {
