@@ -155,7 +155,11 @@ OPTIONS:
   --batch             Render a complete range of .phy animation frames
   --start-frame N     First batch frame, inclusive (default 0)
   --end-frame N       Last batch frame, inclusive (default duration * fps - 1)
-  --destination TYPE  zip or folder (default zip)
+  --destination TYPE  zip, folder, google-drive, dropbox or onedrive (default zip)
+  --output-dir DIR    Local folder or remote cloud folder for batch output
+  auth login PROVIDER  Authorise Google Drive, Dropbox or OneDrive
+  auth status          Show cached cloud connections
+  auth logout PROVIDER Disconnect a cloud provider
   --zip-file FILE     Output ZIP file (default renders/animation.zip)
   --width NUM         Image width in pixels (default: 500)
   --height NUM        Image height in pixels (default: 281; shortcut -H)
@@ -269,10 +273,10 @@ function parseArguments(argv) {
         }
         else if (arg === '--destination') {
 
-            if (i + 1 >= argv.length) throw new Error('--destination requires zip or folder');
+            if (i + 1 >= argv.length) throw new Error('--destination requires a provider');
             cliConfig.destination = argv[++i];
-            if (cliConfig.destination !== 'zip' && cliConfig.destination !== 'folder')
-                throw new Error('Destination must be zip or folder');
+            if (['zip','folder','google-drive','dropbox','onedrive'].indexOf(cliConfig.destination) < 0)
+                throw new Error('Destination must be zip, folder, google-drive, dropbox or onedrive');
         }
         else if (arg === '--zip-file') {
 
@@ -404,7 +408,7 @@ function log(message) {
 	}
 }
 
-function renderScene() {
+async function renderScene() {
 
 	try {
 	
@@ -491,11 +495,17 @@ function renderScene() {
             var endFrame = cliConfig.endFrame === null ?
                 Math.round((batchModel.timeline && batchModel.timeline.duration || 0) * frameRate) - 1 :
                 cliConfig.endFrame;
-            var outDir = cliConfig.outputDir || 'renders/animation';
+            var cloudSelected = ['google-drive','dropbox','onedrive'].includes(cliConfig.destination);
+            var outDir = cliConfig.outputDir || (cloudSelected ?
+                'RtDt/Animation' : 'renders/animation');
+            var remoteWriter = cloudSelected ?
+                await require('./rtdt_cloud_storage_node').create_writer(
+                    cliConfig.destination,outDir) : null;
             var sink = rtdt_animation_destination.create({
-                kind:cliConfig.destination,
+                kind:cloudSelected ? 'folder' : cliConfig.destination,
                 write_file:function (name,bytes) {
 
+                    if (remoteWriter) return remoteWriter(name,bytes);
                     fs.mkdirSync(outDir,{recursive:true});
                     fs.writeFileSync(path.join(outDir,name),Buffer.from(bytes));
                 },
@@ -582,7 +592,12 @@ function writeRenderImage(filename, pixels) {
 async function main() {
 
 	try {
-	
+
+        if (process.argv[2] === 'auth') {
+
+            await require('./rtdt_cloud_auth_node').auth_command(process.argv.slice(3));
+            return;
+        }
 		parseArguments(process.argv);
 		await renderScene();
 		process.exit(0);
