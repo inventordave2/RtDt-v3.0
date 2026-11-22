@@ -1002,6 +1002,21 @@
                     <div class="rtdt-actions"><button id="btnTimeBack" type="button">◀ Previous</button><button id="btnTimeForward" type="button">Next ▶</button></div>
                     <button id="btnApplyPhy" type="button">Apply pose at time</button><div class="rtdt-actions"><button id="btnPlayPhy" type="button">▶ Play animation</button><button id="btnStopPhy" type="button" disabled>■ Stop playback</button></div><div class="control-group"><label for="phyEndTime">Playback end (seconds)</label><input type="number" id="phyEndTime" value="4" min="0.05" step="0.5"></div><p class="rtdt-caption">Playback applies each .phy pose and raytraces successive frames. Use Preview resolution (160×90) for faster playback; larger renders take longer.</p><div id="phyPlaybackStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
                     <div id="phyStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
+                    <details id="phyBatchTools" class="rtdt-batch-tools">
+                        <summary>Export animation frames</summary>
+                        <p class="rtdt-caption">Render numbered PNG frames using the same shared renderer and PNG encoder as the Node CLI. Export a ZIP or choose a local folder where your browser supports it.</p>
+                        <div class="rtdt-field-row">
+                            <div class="control-group"><label for="phyExportStart">First frame</label><input id="phyExportStart" type="number" min="0" step="1" value="0"></div>
+                            <div class="control-group"><label for="phyExportEnd">Last frame (inclusive)</label><input id="phyExportEnd" type="number" min="0" step="1" value="95"></div>
+                        </div>
+                        <div class="control-group"><label for="phyExportDestination">Destination</label>
+                            <select id="phyExportDestination"><option value="zip">Download ZIP (compatible browsers)</option><option value="folder">Write to selected local folder (Chromium / HTTPS)</option></select>
+                        </div>
+                        <div class="rtdt-actions"><button id="btnExportPhy" type="button">Export animation frames</button><button id="btnCancelExportPhy" type="button" disabled>Stop export</button></div>
+                        <progress id="phyExportProgress" max="100" value="0" aria-label="Animation export progress" style="width:100%;display:none;"></progress>
+                        <div id="phyExportStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
+                        <p class="rtdt-caption">Uses the current render resolution and recursion depth. A ZIP is limited to 512 MiB; for large exports, choose a local folder. Google Drive and Dropbox need separate authentication and are not yet connected.</p>
+                    </details>
                 </details>
                 <div id="sceneStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
 
@@ -1209,6 +1224,11 @@
 <script src="rtdt_scene_assets.js"></script>
 <script src="rtdt_scene_format.js"></script>
 <script src="rtdt_scene_browser.js"></script>
-<script src="rtdt_ui_browser_20261118.js?v=asset-states-20261119"></script>
+<script src="rtdt_png.js"></script>
+<script src="rtdt_animation_export.js"></script>
+<script src="rtdt_animation_destination.js"></script>
+<script src="rtdt_animation_batch.js"></script>
+<script src="rtdt_animation_storage_browser.js"></script>
+<script src="rtdt_ui_browser_20261118.js?v=animation-export-20261122"></script>
 </body>
 </html>
