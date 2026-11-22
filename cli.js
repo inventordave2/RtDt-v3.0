@@ -149,6 +149,7 @@ USAGE:
 OPTIONS:
   --scene NAME        Built-in scene name (default: scene1)
   --scene-file FILE   JSON/YAML v1 .scene/.scene.yaml file and assets
+  --lint-pack FILE   Validate a .rdt pack and all referenced files without rendering
   --phy FILE          Load .phy animation file (JSON version 1)
   --time SECONDS      Evaluate .phy at time t
   --frame INDEX       Evaluate .phy at frame INDEX (using timeline fps)
@@ -593,6 +594,14 @@ async function main() {
 
 	try {
 
+        if (process.argv[2] === '--lint-pack') {
+
+            if (process.argv.length !== 4)
+                throw new Error('Usage: node cli.js --lint-pack <pack.rdt>');
+            if (!require('./rtdt_pack_lint_node').print_report(process.argv[3]))
+                process.exitCode = 1;
+            return;
+        }
         if (process.argv[2] === 'auth') {
 
             await require('./rtdt_cloud_auth_node').auth_command(process.argv.slice(3));
