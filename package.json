@@ -17,7 +17,7 @@
     "test:pack": "node tests/rdt-pack.test.js",
     "test:animation": "node tests/aetherore-formula.test.js && node tests/animation-export.test.js",
     "test:animation:full": "node tests/animation-sequence.test.js",
-    "test:cloud": "node tests/cloud-uploads.test.js && node tests/credential-store.test.js",
+    "test:cloud": "node tests/cloud-uploads.test.js && node tests/credential-store.test.js && node tests/cloud-auth-browser.test.js",
     "test:browser-adapters": "node tests/browser-adapters.test.js",
     "test:browser": "node tests/webapp-browser.test.js",
     "test:all": "npm test && npm run test:animation:full && npm run test:browser",
