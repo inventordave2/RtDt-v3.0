@@ -674,6 +674,11 @@
         /* The lifecycle is blue while downloading, green on success and red only on failure. */
         .rtdt-dep-loading { background:#edf5ff; border-left:3px solid #2479d8; padding-left:9px; }
         .rtdt-dep-loading b { color:#145eac; }
+        .rtdt-phy-indicator { padding: 12px; margin: 10px 0; border-left: 4px solid #64748b; background: #f0f3f7; color: #243449; font-size: 13px; line-height: 1.6; }
+        .rtdt-phy-indicator strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+        .rtdt-phy-indicator small { display: block; color: inherit; }
+        .rtdt-phy-indicator.is-loaded { border-color: #22834a; background: #eaf7ee; color: #13582e; }
+        .rtdt-phy-indicator.is-error { border-color: #b92727; background: #fff0ee; color: #852020; }
         .rtdt-dep-loaded { background:#eef9f1; border-left:3px solid #2a9654; padding-left:9px; }
         .rtdt-dep-loaded b { color:#176b39; }
         .rtdt-dep-missing { background:#fff0ee; border-left:3px solid #ce3a31; padding-left:9px; }
@@ -983,6 +988,10 @@
                     </div>
                 <button id="btnOpenImport" type="button" class="btn-secondary">Browse all files…</button><button id="btnOpenImage" type="button" class="btn-secondary">Material settings…</button></details>
                 <input type="file" id="phyFile" accept=".phy,application/json" style="display:none" aria-label="Legacy local physics file">
+                <div id="phyImportIndicator" class="rtdt-phy-indicator" role="status" aria-live="polite" aria-atomic="true">
+                    <strong>○ No AetherOre animation loaded</strong>
+                    <small>Load a scene, then import a .phy animation. Its verified filename and timeline will appear here.</small>
+                </div>
                 <details class="rtdt-animation-tools">
                     <summary>Animation timeline</summary>
                     <div class="control-group">
@@ -1089,6 +1098,7 @@
       <select id="repoSampleSelect">
         <option value="scene">Orbit Studio (.scene)</option>
         <option value="phy">Orbit animation (.phy)</option>
+                <option value="phy-formula">Orbit formula animation (.phy)</option>
         <option value="obj">Pyramid mesh (.obj)</option>
         <option value="jpeg">Earth map (JPEG)</option>
       </select>
@@ -1100,7 +1110,7 @@
     </div>
     <button id="btnImportSelected" type="button">Import selected file</button>
     <div id="repoSampleStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
-    <p class="rtdt-caption">For animated scenes, load the scene before its .phy file. JSON .scene is supported in the browser; YAML scene loading is not yet supported.</p>
+    <p class="rtdt-caption">Load the scene before importing an animation. JSON and YAML scenes and AetherOre .phy files use the shared parser.</p>
   </div>
 </div>
 <!-- Legacy camera, light and file controls migrated as accessible modal dialogs -->
