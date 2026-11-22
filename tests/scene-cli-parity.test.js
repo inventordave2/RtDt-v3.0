@@ -14,7 +14,7 @@ const scripts = [
     'rtdt_ray.js','rtdt_light.js','rtdt_material.js','rtdt_world.js',
     'rtdt_shade.js','rtdt_p+e.js','rtdt_pattern.js','rtdt_colour.js',
     'rtdt_examples.js','raytracer-core.js','rtdt_render_core.js',
-    'rtdt_scene_assets.js','rtdt_scene_browser.js','rtdt_image_io_browser.js'
+    'rtdt_scene_assets.js','rtdt_scene_format.js','rtdt_scene_browser.js','rtdt_image_io_browser.js'
 ];
 const sandbox = {console:{log(){},time(){},timeEnd(){}},Math,Date,Number,String,
     Object,JSON,Error,TypeError,Infinity,isFinite,parseInt,parseFloat,Uint8Array};
@@ -31,10 +31,10 @@ const imageIO = require('../rtdt_image_io_node');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(),'rtdt-parity-'));
 try {
 
-    for (const name of ['orbit','rocket-to-rainbow-planet','vw-beetle-psychedelia']) {
+    for (const name of ['orbit','orbit-yaml','rocket-to-rainbow-planet','vw-beetle-psychedelia']) {
 
-        const sceneFile = path.join(ROOT,'samples',name+'.scene');
-        const model = JSON.parse(fs.readFileSync(sceneFile,'utf8'));
+        const sceneFile = path.join(ROOT,'samples',name === 'orbit-yaml' ? 'orbit-yaml.scene.yaml' : name+'.scene');
+        const model = sandbox.rtdt_scene_format.parse(fs.readFileSync(sceneFile,'utf8'));
         const resolved = assetNode.resolve(model,sceneFile,ROOT,
             sandbox.rtdt_scene_assets,sandbox.rtdt_image_io_browser);
         assert.ok(resolved.records.every(record => record.status==='loaded' ||
@@ -55,7 +55,10 @@ try {
             'CLI output must match the shared scene + renderer path: '+name);
     }
     assert.throws(() => sandbox.rtdt_scene_assets.check_path('../escape.obj'));
-    console.log('Node CLI and shared scene/render outcomes match for three asset scenes');
+    assert.deepEqual(JSON.parse(JSON.stringify(sandbox.rtdt_scene_format.parse(
+        fs.readFileSync(path.join(ROOT,'samples','orbit-yaml.scene.yaml'),'utf8')))),
+        JSON.parse(fs.readFileSync(path.join(ROOT,'samples','orbit.scene'),'utf8')));
+    console.log('Node CLI and shared scene/render outcomes match for JSON/YAML scene packs');
 } finally {
 
     fs.rmSync(temp,{recursive:true,force:true});
