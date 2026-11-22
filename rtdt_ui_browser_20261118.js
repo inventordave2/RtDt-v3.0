@@ -908,10 +908,7 @@ var rtdt_ui_browser = (function () {
         var canvas = element('canvas');
         canvas.width = width;
         canvas.height = height;
-        var render_world = new world();
-        render_world.light = RtDtState.scene.l;
-        render_world.objects = RtDtState.scene.o.s || [RtDtState.scene.o];
-        render_world.background = RtDtState.scene.background || colour(0,0,0);
+        var render_world = rtdt_render_core.create_world(RtDtState.scene);
 
         pixels = new Array(width * height);
         render_index = 0;
@@ -942,8 +939,8 @@ var rtdt_ui_browser = (function () {
                     var y = render_index + row;
                     for (var x = 0; x < width; x++) {
 
-                        var ray = RtDtState.scene.c.ray_for_pixel(x, y);
-                        var c = color_at(render_world, ray, depth);
+                        var c = rtdt_render_core.trace_pixel(
+                            render_world, RtDtState.scene.c, x, y, depth);
 
                         pixels[y * width + x] = c;
                     }
