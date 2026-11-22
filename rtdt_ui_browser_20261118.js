@@ -19,6 +19,8 @@ var rtdt_ui_browser = (function () {
     var playback_frame = 0;
     var playback_total = 0;
     var playback_fps = 24;
+    var export_active = false;
+    var export_cancelled = false;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -82,8 +84,8 @@ var rtdt_ui_browser = (function () {
         }
     }
     function play_animation() {
-        if (running || playback_active) {
-            playback_status('Stop rendering before starting animation.','error');
+        if (running || playback_active || export_active) {
+            playback_status('Stop rendering or exporting before starting animation.','error');
             return;
         }
         if (!scene_loaded || !phy_model || !phy_animator) {
@@ -103,6 +105,133 @@ var rtdt_ui_browser = (function () {
         element('btnPlayPhy').disabled=true;
         element('btnStopPhy').disabled=false;
         render_animation_frame();
+    }
+
+    function batch_status(message, mode) {
+
+        status('phyExportStatus',message,mode || 'info');
+    }
+
+    function export_controls(active) {
+
+        element('btnExportPhy').disabled = active;
+        element('btnCancelExportPhy').disabled = !active;
+        element('btnRender').disabled = active;
+        element('btnPlayPhy').disabled = active;
+    }
+
+    function cancel_batch() {
+
+        if (!export_active) return;
+        export_cancelled = true;
+        batch_status('Cancelling animation export after the current frame…','info');
+    }
+
+    async function start_batch() {
+
+        if (running || playback_active || export_active) {
+
+            batch_status('Stop the current render or playback before exporting.','error');
+            return;
+        }
+        if (!scene_loaded || !phy_model || !phy_animator) {
+
+            batch_status('Load a scene and its .phy animation first.','error');
+            return;
+        }
+        var width = Number(element('renderWidth').value);
+        var height = Number(element('renderHeight').value);
+        var depth = Number(element('renderQuality').value);
+        var start = Number(element('phyExportStart').value);
+        var end = Number(element('phyExportEnd').value);
+        var fps = phy_model.timeline && phy_model.timeline.fps || 24;
+        var destination = element('phyExportDestination').value;
+        if (!Number.isInteger(depth) || depth < 1 || depth > 20) {
+
+            batch_status('Choose a valid ray recursion depth (1–20).','error');
+            return;
+        }
+        var originalWidth = WIDTH, originalHeight = HEIGHT;
+        var originalCamera = RtDtState.scene.c;
+        var originalTime = Number(element('phyTime').value) || 0;
+        var sink, exportStarted = false, finished = false;
+        try {
+
+            rtdt_animation_batch.settings({startFrame:start,endFrame:end,fps:fps,
+                width:width,height:height,sink:{add:function(){},finish:function(){}},
+                render_frame:function(){}});
+            // Ask for a directory synchronously from the user gesture where supported.
+            sink = await rtdt_animation_storage_browser.create(destination);
+            if (running || playback_active || !scene_loaded)
+                throw new Error('Scene changed while selecting an output destination');
+            export_active = true;
+            export_cancelled = false;
+            running = true;
+            exportStarted = true;
+            export_controls(true);
+            var progress = element('phyExportProgress');
+            progress.style.display = 'block';
+            progress.value = 0;
+            batch_status('Starting frames '+start+'–'+end+'…','info');
+            WIDTH = width;
+            HEIGHT = height;
+            var renderCamera = new camera(width,height,
+                originalCamera.field_of_view || Math.PI/4);
+            renderCamera.setCTransform(originalCamera.transform);
+            RtDtState.scene.c = renderCamera;
+            var result = await rtdt_animation_batch.run({
+                sink:sink, startFrame:start, endFrame:end, fps:fps,
+                width:width, height:height,
+                cancelled:function () { return export_cancelled; },
+                render_frame:function (index,time) {
+
+                    if (export_cancelled)
+                        throw new Error('Animation export cancelled');
+                    phy_animator.at(time);
+                    var renderWorld = rtdt_render_core.create_world(RtDtState.scene);
+                    return rtdt_render_core.render_pixels(renderWorld,renderCamera,
+                        width,height,depth);
+                },
+                on_progress:function (done,total,name) {
+
+                    progress.value = Math.round(100*done/total);
+                    batch_status('Rendered '+done+' / '+total+' frames · '+name,'info');
+                },
+                yield_control:function () {
+
+                    return new Promise(function (resolve) { setTimeout(resolve,0); });
+                }
+            });
+            finished = true;
+            batch_status('Export complete: '+result.manifest.frames.length+
+                ' PNG frames and manifest.json '+(destination==='zip'?
+                    'downloaded in ZIP.':'written to the selected folder.'),'success');
+        } catch (error) {
+
+            batch_status('Animation export '+(export_cancelled?'stopped: ':'failed: ')+
+                error.message,'error');
+        } finally {
+
+            if (exportStarted) {
+
+                WIDTH = originalWidth;
+                HEIGHT = originalHeight;
+                RtDtState.scene.c = originalCamera;
+                try {
+
+                    phy_animator.at(originalTime);
+                } catch (error) {
+
+                    status('phyStatus','Could not restore pose: '+error.message,'error');
+                }
+                running = false;
+                export_active = false;
+                export_cancelled = false;
+                export_controls(false);
+                if (!finished)
+                    element('phyExportProgress').style.display = 'none';
+            }
+        }
     }
 
     function step_phy_frame(direction) {
@@ -462,6 +591,8 @@ var rtdt_ui_browser = (function () {
         var fps = model.timeline && model.timeline.fps || 30;
         var duration = model.timeline && model.timeline.duration || lastTime;
         if (duration > 0) element('phyEndTime').value = String(duration);
+        element('phyExportStart').value = '0';
+        element('phyExportEnd').value = String(Math.max(0,Math.round(duration * fps)-1));
         var summary = tracks.length + ' object track(s) · ' + formulaCount +
             ' formula channel(s) · ' + keyframeCount + ' keyframed channel(s) · ' +
             fps + ' FPS' + (duration > 0 ? ' · ' + duration + ' s' : '');
@@ -959,7 +1090,7 @@ var rtdt_ui_browser = (function () {
 
     function start_render() {
 
-        if (running || !scene_loaded)
+        if (running || export_active || !scene_loaded)
             return;
 
         if (active_scene_assets.some(function (asset) { return asset.required && asset.status !== 'loaded'; })) {
@@ -1326,6 +1457,8 @@ var rtdt_ui_browser = (function () {
         bind('btnApplyPhy', 'click', apply_phy);
         bind('btnPlayPhy', 'click', play_animation);
         bind('btnStopPhy', 'click', function () { stop_animation(false); });
+        bind('btnExportPhy','click',start_batch);
+        bind('btnCancelExportPhy','click',cancel_batch);
         bind('btnRender', 'click', start_render);
         bind('btnAbort', 'click', cancel_render);
         bind('btnUpdateCamera', 'click', change_camera);
@@ -1404,6 +1537,7 @@ var rtdt_ui_browser = (function () {
         start_render: start_render,
         cancel_render: cancel_render, set_resolution: set_resolution,
         play_animation: play_animation, stop_animation: stop_animation,
+        start_batch: start_batch, cancel_batch: cancel_batch,
         step_phy_frame: step_phy_frame, import_image: import_image,
         apply_image: apply_image, apply_light: apply_light,
         divide_scene: divide_scene};
