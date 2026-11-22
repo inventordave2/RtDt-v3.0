@@ -1010,12 +1010,23 @@
                             <div class="control-group"><label for="phyExportEnd">Last frame (inclusive)</label><input id="phyExportEnd" type="number" min="0" step="1" value="95"></div>
                         </div>
                         <div class="control-group"><label for="phyExportDestination">Destination</label>
-                            <select id="phyExportDestination"><option value="zip">Download ZIP (compatible browsers)</option><option value="folder">Write to selected local folder (Chromium / HTTPS)</option></select>
+                            <select id="phyExportDestination"><option value="zip">Download ZIP</option><option value="folder">Local folder (Chromium / HTTPS)</option><option value="google-drive">Google Drive</option><option value="dropbox">Dropbox</option><option value="onedrive">OneDrive</option></select>
+                        </div>
+                        <div id="phyCloudSettings" style="display:none;">
+                            <div class="control-group"><label for="phyCloudClientId">OAuth application client ID / app key</label>
+                                <input id="phyCloudClientId" type="text" autocomplete="off" placeholder="Enter the public client ID for the selected provider">
+                            </div>
+                            <div class="control-group"><label for="phyCloudFolder">Cloud folder path</label>
+                                <input id="phyCloudFolder" type="text" value="RtDt/Animation" spellcheck="false">
+                            </div>
+                            <button id="btnConnectPhyCloud" type="button">Connect cloud account</button>
+                            <div id="phyCloudStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
+                            <p class="rtdt-caption">Register an OAuth application for your provider and this site's origin/redirect URL first. Public client IDs are safe to enter; never enter a client secret or access token here. Browser tokens stay in memory for this session.</p>
                         </div>
                         <div class="rtdt-actions"><button id="btnExportPhy" type="button">Export animation frames</button><button id="btnCancelExportPhy" type="button" disabled>Stop export</button></div>
                         <progress id="phyExportProgress" max="100" value="0" aria-label="Animation export progress" style="width:100%;display:none;"></progress>
                         <div id="phyExportStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
-                        <p class="rtdt-caption">Uses the current render resolution and recursion depth. A ZIP is limited to 512 MiB; for large exports, choose a local folder. Google Drive and Dropbox need separate authentication and are not yet connected.</p>
+                        <p class="rtdt-caption">Uses the current render resolution and recursion depth. A ZIP is limited to 512 MiB; for large exports, choose a local folder or connect a cloud account. Cloud destinations upload each numbered PNG and the manifest.</p>
                     </details>
                 </details>
                 <div id="sceneStatus" class="status" role="status" aria-live="polite" style="display:none;"></div>
@@ -1228,7 +1239,9 @@
 <script src="rtdt_animation_export.js"></script>
 <script src="rtdt_animation_destination.js"></script>
 <script src="rtdt_animation_batch.js"></script>
+<script src="rtdt_cloud_storage.js"></script>
+<script src="rtdt_cloud_auth_browser.js"></script>
 <script src="rtdt_animation_storage_browser.js"></script>
-<script src="rtdt_ui_browser_20261118.js?v=animation-export-20261122"></script>
+<script src="rtdt_ui_browser_20261118.js?v=cloud-export-20261122"></script>
 </body>
 </html>
