@@ -1,5 +1,5 @@
-/* RtDt browser scene v1: deliberately small, declarative JSON scene format.
- * No executable expressions, eval, YAML or remote script loading.
+/* RtDt shared declarative scene v1 constructor.
+ * JSON and YAML use the same validated scene model. No executable expressions.
  */
 var rtdt_scene_browser = (function () {
     function triple(value, label, fallback) {
@@ -12,10 +12,10 @@ var rtdt_scene_browser = (function () {
     function point3(a) { return point(a[0],a[1],a[2]); }
     function vector3(a) { return vector(a[0],a[1],a[2]); }
     function parse(source) {
-        var model = typeof source === 'string' ? JSON.parse(source) : source;
+        var model = rtdt_scene_format.parse(source);
         if (!model || Array.isArray(model) || model.version !== 1 ||
             !Array.isArray(model.objects) || model.objects.length > 500)
-            throw new Error('Expected browser .scene JSON version 1 with up to 500 objects');
+            throw new Error('Expected .scene JSON/YAML version 1 with up to 500 objects');
         // Empty scenes are valid and render only the configured background.
         triple(model.background,'background',[0,0,0]);
         model.objects.forEach(function (item) {
