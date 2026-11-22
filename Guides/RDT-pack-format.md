@@ -188,9 +188,25 @@ The **same v1 structural grammar** is implemented in
 A Node pack linter can additionally check that referenced files exist
 and that the scene and animation documents are readable.
 
+Run either of these commands from the repository root:
+
+```sh
+node cli.js --lint-pack samples/orbit.rdt
+node rtdt_pack_lint_node.js samples/orbit.rdt
+```
+
+A successful preflight exits with code `0`; missing required files or
+invalid syntax return a nonzero exit code. Optional files generate
+warnings, and the report lists checked dependencies.
+
 The linter validates pack structure and local dependency paths, **not**
 the visual correctness of a finished raytrace or the availability of
 a cloud account.
+
+**Execution status:** Pack v1 grammar and preflight validation are implemented.
+Direct execution of `.rdt` jobs through `--job` and the WebApp pack
+picker are planned integrations; until then, the CLI's existing
+`--scene-file`, `--phy` and batch options render the referenced files.
 
 ## Security and advanced features
 
