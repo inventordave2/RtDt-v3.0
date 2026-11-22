@@ -98,6 +98,26 @@ function fallback_notice() {
         'rendering needs neither credential store nor cloud login.';
 }
 
+function ensure_available() {
+
+    const keyring = optional_keyring();
+    if (keyring) {
+
+        try {
+
+            // Check the backend before asking the user to complete OAuth.
+            new keyring.Entry(VAULT_SERVICE,'google-drive').getPassword();
+            return 'OS keyring';
+        } catch (error) {
+
+            if (!allow_plaintext())
+                throw new Error('OS keyring is installed but unusable. '+fallback_notice());
+        }
+    }
+    if (!allow_plaintext()) throw new Error(fallback_notice());
+    return 'explicit plaintext fallback';
+}
+
 function migrate_legacy() {
 
     if (!fs.existsSync(LEGACY_FILE)) return;
@@ -215,4 +235,4 @@ function store_status(provider) {
 }
 
 module.exports = {PROVIDERS,get_record,set_record,delete_record,store_status,
-    optional_keyring,migrate_legacy};
+    optional_keyring,migrate_legacy,ensure_available};
