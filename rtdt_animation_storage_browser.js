@@ -13,7 +13,7 @@ var rtdt_animation_storage_browser = (function () {
         setTimeout(function () { URL.revokeObjectURL(url); },15000);
     }
 
-    async function create(kind,remotePath) {
+    async function create(kind,remotePath,archiveName) {
 
         var cloud = ['google-drive','dropbox','onedrive'].indexOf(kind) >= 0;
         if (kind !== 'zip' && kind !== 'folder' && !cloud)
@@ -31,7 +31,7 @@ var rtdt_animation_storage_browser = (function () {
             kind:cloud ? 'folder' : kind,
             output_archive:function (bytes) {
 
-                download(bytes,'rtdt-animation.zip');
+                download(bytes,archiveName || 'rtdt-animation.zip');
             },
             write_file:async function (name,bytes) {
 
