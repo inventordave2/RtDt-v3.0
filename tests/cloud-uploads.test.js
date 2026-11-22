@@ -74,6 +74,22 @@ async function main() {
         else process.env.RTDT_DROPBOX_ACCESS_TOKEN = prior;
     }
     for (const provider of auth.PROVIDERS) await exercise(provider);
+    global.fetch = async function () {
+
+        return new Response('secret-should-not-be-logged',{status:401});
+    };
+    await assert.rejects(
+        cloud.create_writer('google-drive','RtDt/Test',async function () {
+
+            return 'sample-access-token';
+        }),
+        function (error) {
+
+            assert.match(error.message,/HTTP 401/);
+            assert.doesNotMatch(error.message,/secret-should-not-be-logged|sample-access-token/);
+            return true;
+        }
+    );
     console.log('Cloud upload adapters and optional token fallback verified with mock HTTP');
 }
 
