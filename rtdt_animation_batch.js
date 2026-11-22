@@ -25,7 +25,7 @@ var rtdt_animation_batch = (function () {
             typeof options.sink.finish !== 'function' ||
             typeof options.render_frame !== 'function')
             throw new Error('Animation requires a renderer and output destination');
-        if (typeof rtdt_png === 'undefined')
+        if (typeof rtdt_png === 'undefined' && typeof require !== 'function')
             throw new Error('Shared PNG encoder is missing');
         return {start:start,end:end,fps:fps,width:width,height:height};
     }
@@ -33,6 +33,7 @@ var rtdt_animation_batch = (function () {
     async function run(options) {
 
         var opts = settings(options);
+        var png = typeof rtdt_png !== 'undefined' ? rtdt_png : require('./rtdt_png');
         var manifest = {version:1,format:'png',startFrame:opts.start,endFrame:opts.end,
             fps:opts.fps,width:opts.width,height:opts.height,frames:[]};
         var sink = options.sink;
@@ -42,11 +43,11 @@ var rtdt_animation_batch = (function () {
                 throw new Error('Animation export cancelled');
             var time = index / opts.fps;
             var pixels = await options.render_frame(index,time,opts.width,opts.height);
-            var encoded = rtdt_png.encode(pixels,opts.width,opts.height);
+            var encoded = png.encode(pixels,opts.width,opts.height);
             var name = frame_name(index);
             await sink.add(name,encoded);
             manifest.frames.push({index:index,timeSeconds:time,
-                filename:name,crc32:rtdt_png.crc32(encoded),bytes:encoded.length});
+                filename:name,crc32:png.crc32(encoded),bytes:encoded.length});
             if (options.on_progress)
                 options.on_progress(index-opts.start+1,opts.end-opts.start+1,name);
             if (options.yield_control)
