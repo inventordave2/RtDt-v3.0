@@ -107,6 +107,7 @@ async function await_popup() {
 
 async function login_pkce(provider) {
 
+    popup = null;
     const pending = auth.connect(provider,'test-client-1234');
     await await_popup();
     const url = new URL(popup.location.href);
@@ -169,6 +170,7 @@ async function main() {
     auth.disconnect('google-drive');
 
     denyTokenExchange = true;
+    popup = null;
     const blocked = auth.connect('dropbox','test-client-1234');
     await await_popup();
     const url = new URL(popup.location.href);
