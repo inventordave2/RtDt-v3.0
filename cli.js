@@ -377,6 +377,7 @@ function renderScene() {
 		// Initialize raytracer
 		initRaytracer(WIDTH, HEIGHT);
 		
+        var declaredPhySource = null;
 		// Both frontends use the same declarative loader and asset model.
         if (cliConfig.sceneFile) {
 
@@ -386,6 +387,9 @@ function renderScene() {
                 model,sceneFile,repoRoot,rtdt_scene_assets,rtdt_image_io_browser);
             rtdt_scene_browser.load(model,WIDTH,HEIGHT,resolved);
             for (const entry of resolved.entries) {
+
+                if (entry.kind === 'phy' && !declaredPhySource && resolved.files['phy:'+entry.path])
+                    declaredPhySource = {source:resolved.files['phy:'+entry.path],path:entry.path};
 
                 if (entry.kind === 'image' && resolved.files['image:'+entry.path])
                     RtDtState.scene.PPM[entry.path] = resolved.files['image:'+entry.path];
@@ -408,11 +412,12 @@ function renderScene() {
 		
 		// Optional AetherOre animation: numeric string indices ("0", "1", ...)
 		// refer to the top-level objects in RtDtState.scene.o.s.
-		if (cliConfig.phyFile) {
+		if (cliConfig.phyFile || declaredPhySource) {
 		
-			if (!/\.phy$/i.test(cliConfig.phyFile))
+			if (cliConfig.phyFile && !/\.phy$/i.test(cliConfig.phyFile))
 				throw new Error('Expected a .phy animation file');
-			var phy = rtdt_aetherore.parse_phy(fs.readFileSync(cliConfig.phyFile, 'utf8'));
+			var phy = rtdt_aetherore.parse_phy(cliConfig.phyFile ?
+                fs.readFileSync(cliConfig.phyFile, 'utf8') : declaredPhySource.source);
 			var bindings = {};
 			RtDtState.scene.o.s.forEach(function (shape, index) {
 			
@@ -426,7 +431,7 @@ function renderScene() {
 			var t = cliConfig.phyTime !== null ? cliConfig.phyTime :
 				(cliConfig.phyFrame !== null ? cliConfig.phyFrame / fps : 0);
 			rtdt_aetherore.create_animator(phy, bindings).at(t);
-			log('AetherOre: ' + cliConfig.phyFile + ' at t=' + t + 's');
+			log('AetherOre: ' + (cliConfig.phyFile || declaredPhySource.path) + ' at t=' + t + 's');
 		}
 		else if (cliConfig.phyTime !== null || cliConfig.phyFrame !== null)
 			throw new Error('--time/--frame requires --phy');
