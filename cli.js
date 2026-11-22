@@ -63,6 +63,7 @@ try {
 	loadScript(path.join(repoRoot, 'raytracer-core.js'));
 	loadScript(path.join(repoRoot, 'rtdt_render_core.js'));
 	loadScript(path.join(repoRoot, 'rtdt_scene_assets.js'));
+	loadScript(path.join(repoRoot, 'rtdt_scene_format.js'));
 	loadScript(path.join(repoRoot, 'rtdt_scene_browser.js'));
 	loadScript(path.join(repoRoot, 'rtdt_image_io_browser.js'));
 	loadScript(path.join(repoRoot, 'rtdt_objfile-node.js'));
@@ -135,7 +136,7 @@ USAGE:
 
 OPTIONS:
   --scene NAME        Built-in scene name (default: scene1)
-  --scene-file FILE   JSON v1 .scene file with declared local assets
+  --scene-file FILE   JSON/YAML v1 .scene/.scene.yaml file and assets
   --phy FILE          Load .phy animation file (JSON version 1)
   --time SECONDS      Evaluate .phy at time t
   --frame INDEX       Evaluate .phy at frame INDEX (using timeline fps)
