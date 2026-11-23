@@ -148,23 +148,9 @@ var rtdt_image_io_browser = (function () {
 
     function export_ppm(pixels, width, height, filename) {
 
-        var rows = ['P3', width + ' ' + height, '255'];
-
-        for (var y = 0; y < height; y++) {
-
-            var row = [];
-            for (var x = 0; x < width; x++) {
-
-                var c = pixels[y * width + x];
-                var rgb = colorTo255(c);
-                row.push(rgb.r + ' ' + rgb.g + ' ' + rgb.b);
-            }
-            rows.push(row.join(' '));
-        }
-
-        download_blob(new Blob([rows.join('\n') + '\n'], {
-            type: 'image/x-portable-pixmap'
-        }), filename || 'render.ppm');
+        var bytes = rtdt_ppm.encode(pixels,width,height);
+        download_blob(new Blob([bytes],{type:'image/x-portable-pixmap'}),
+            filename || 'render.ppm');
     }
 
     function export_rgb_bmp(pixels, width, height, filename) {
