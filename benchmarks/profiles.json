@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "description": "Versioned, deterministic RtDt native end-to-end render benchmarks. Scores include CLI startup, scene import, rendering, and encoding; compare on identical hardware.",
+  "profiles": [
+    {
+      "id": "primitives",
+      "label": "Basic primitives and shading",
+      "scene": "samples/orbit.scene",
+      "width": 160,
+      "height": 90,
+      "quality": 1,
+      "features": [
+        "sphere",
+        "cube",
+        "plane",
+        "lighting"
+      ],
+      "mode": "still"
+    },
+    {
+      "id": "reflections",
+      "label": "Reflective materials and recursion",
+      "scene": "samples/prism-garden.scene",
+      "width": 160,
+      "height": 90,
+      "quality": 3,
+      "features": [
+        "reflection",
+        "recursion",
+        "materials"
+      ],
+      "mode": "still"
+    },
+    {
+      "id": "complex-scene",
+      "label": "City scene intersections",
+      "scene": "samples/neon-city.scene",
+      "width": 160,
+      "height": 90,
+      "quality": 2,
+      "features": [
+        "multiple objects",
+        "lighting",
+        "reflection"
+      ],
+      "mode": "still"
+    },
+    {
+      "id": "animation",
+      "label": "AetherOre animation four frames",
+      "scene": "samples/orbit.scene",
+      "phy": "samples/orbit/orbit-formula.phy",
+      "width": 96,
+      "height": 54,
+      "quality": 1,
+      "fps": 24,
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "features": [
+        "animation",
+        ".phy",
+        "PNG",
+        "ZIP"
+      ],
+      "mode": "animation"
+    }
+  ]
+}
