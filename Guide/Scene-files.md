@@ -33,6 +33,34 @@ Save this as `example.scene`:
 
 The scene format supports camera position/target/up/FOV (FOV in degrees), a point light, the ray-miss background colour and an object array. Typical object types are `sphere`, `cube`, `plane` and `mesh`. Position, scale, colour and material fields control construction; material parameters include ambient/diffuse/specular, shininess, reflection, transparency and refractive index. Colours and light intensities are normalized RGB.
 
+### Procedural surfaces
+
+An object may use a built-in procedural RGB surface map instead of an image
+texture. The generator is deterministic and produces a seamless, tileable map
+in memory:
+
+~~~json
+{
+  "type": "sphere",
+  "name": "Brushed steel",
+  "color": [1, 1, 1],
+  "surface": {
+    "type": "brushed-steel",
+    "width": 512,
+    "height": 256,
+    "seed": 1
+  }
+}
+~~~
+
+Supported `surface.type` values are `brushed-steel`, `hammered-titanium`,
+`copper-patina` and `anodized-iridescence`. `width` and `height` default to
+512×256 and are limited to a combined 1,048,576 pixels; `seed` defaults to 1.
+These generators create colour/albedo patterns, not normal or roughness maps.
+RtDt's current point-light Phong shading supplies the highlights, so these are
+metal-look finishes rather than a physically based metallic BRDF. See the
+[Metal Finishes sample](../samples/metal-finishes.scene).
+
 ## Meshes, textures and animation
 
 A scene may declare required or optional dependencies and refer to them from objects:
@@ -76,4 +104,4 @@ See [pack creation](Scene-pack-creation.md), [sample scenes](Sample-scenes.md), 
 
 ## Limits
 
-Supported lighting is a point light; sampled soft area/sphere lights and normal/bump-map shading are not implemented. The provided Lee Perry-Smith sample is a geometry preview without the original photographic texture. This format is not a general-purpose executable script or full DCC/glTF interchange standard.
+Supported lighting is a point light; sampled soft area/sphere lights and normal/bump-map shading are not implemented. Procedural metal maps affect surface colour only; they do not add PBR roughness, environment reflections or conductor Fresnel. The provided Lee Perry-Smith sample is a geometry preview without the original photographic texture. This format is not a general-purpose executable script or full DCC/glTF interchange standard.

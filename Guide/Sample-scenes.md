@@ -5,6 +5,7 @@ These repository scenes are supported by the declarative loader. Choose a featur
 | Scene | File | Notes |
 | --- | --- | --- |
 | Orbit Studio | [orbit.scene](../samples/orbit.scene) | Primitives and [AetherOre `.phy`](../samples/orbit/orbit-formula.phy); [192-frame `.rdt` pack](../samples/orbit.rdt) |
+| Metal Finishes | [metal-finishes.scene](../samples/metal-finishes.scene) | Four deterministic procedural metal-look maps: brushed steel, hammered titanium, copper patina and anodized iridescence |
 | Prism Garden | [prism-garden.scene](../samples/prism-garden.scene) | Reflective primitives |
 | Cosmic Orbs | [cosmic-orbs.scene](../samples/cosmic-orbs.scene) | Celestial objects |
 | Neon City | [neon-city.scene](../samples/neon-city.scene) | Buildings and reflective ground |

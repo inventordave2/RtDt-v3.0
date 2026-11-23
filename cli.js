@@ -80,6 +80,7 @@ try {
 	loadScript(path.join(repoRoot, 'rtdt_aetherore.js'));
     loadScript(path.join(repoRoot, 'rtdt_flightpath.js'));
     loadScript(path.join(repoRoot, 'rtdt_mandelbrot.js'));
+    loadScript(path.join(repoRoot, 'rtdt_metal_surfaces.js'));
 	
 	// Create scenes object from loaded functions
 	if (typeof global.scenes === 'undefined') {

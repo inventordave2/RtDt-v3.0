@@ -14,7 +14,8 @@ const scripts = [
     'rtdt_ray.js','rtdt_light.js','rtdt_material.js','rtdt_world.js',
     'rtdt_shade.js','rtdt_p+e.js','rtdt_pattern.js','rtdt_colour.js',
     'rtdt_examples.js','raytracer-core.js','rtdt_render_core.js',
-    'rtdt_scene_assets.js','rtdt_scene_format.js','rtdt_scene_browser.js','rtdt_image_io_browser.js'
+    'rtdt_scene_assets.js','rtdt_scene_format.js','rtdt_metal_surfaces.js',
+    'rtdt_scene_browser.js','rtdt_image_io_browser.js'
 ];
 const sandbox = {console:{log(){},time(){},timeEnd(){}},Math,Date,Number,String,
     Object,JSON,Error,TypeError,Infinity,isFinite,parseInt,parseFloat,Uint8Array};
@@ -31,7 +32,7 @@ const imageIO = require('../rtdt_image_io_node');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(),'rtdt-parity-'));
 try {
 
-    for (const name of ['orbit','orbit-yaml','rocket-to-rainbow-planet','vw-beetle-psychedelia']) {
+    for (const name of ['orbit','orbit-yaml','rocket-to-rainbow-planet','vw-beetle-psychedelia','metal-finishes']) {
 
         const sceneFile = path.join(ROOT,'samples',name === 'orbit-yaml' ? 'orbit-yaml.scene.yaml' : name+'.scene');
         const model = sandbox.rtdt_scene_format.parse(fs.readFileSync(sceneFile,'utf8'));

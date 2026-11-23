@@ -42,6 +42,7 @@ See [CLI usage](Guide/CLI.md), [scene files](Guide/Scene-files.md), and [the .rd
 ## Included examples
 
 - [Orbit Studio](samples/orbit.scene), [pack manifest](samples/orbit.rdt), and [animation](samples/orbit/orbit-formula.phy)
+- [Metal Finishes](samples/metal-finishes.scene): four procedural metal-look surfaces
 - [Rocket to Rainbow Planet](samples/rocket-to-rainbow-planet.scene) with OBJ assets
 - [Aurora Orrery](samples/aurora-orrery.scene) and its orbital-ring OBJ meshes
 - [Beetle Psychedelia](samples/vw-beetle-psychedelia.scene), [Prism Garden](samples/prism-garden.scene), [Cosmic Orbs](samples/cosmic-orbs.scene), [Neon City](samples/neon-city.scene), and [Reflection Studio](samples/reflection-studio.scene)
@@ -56,7 +57,7 @@ See [sample scenes](Guide/Sample-scenes.md) for links and asset guidance.
 | CLI adapter | `cli.js`, `rtdt_image_io_node.js`, `rtdt_scene_assets_node.js` |
 | Browser adapter | `webapp.html`, `rtdt_ui_browser_20261118.js`, `rtdt_image_io_browser.js` |
 | Shared execution | `rtdt_job.js`, `rtdt_render_core.js`, `rtdt_animation_batch.js` |
-| Shared scene and pack contracts | `rtdt_scene_format.js`, `rtdt_scene_browser.js`, `rtdt_pack.js`, `rtdt_scene_assets.js` |
+| Shared scene and pack contracts | `rtdt_scene_format.js`, `rtdt_scene_browser.js`, `rtdt_metal_surfaces.js`, `rtdt_pack.js`, `rtdt_scene_assets.js` |
 | Shared animation/output | `rtdt_aetherore.js`, `rtdt_png.js`, `rtdt_ppm.js`, `rtdt_animation_export.js`, `rtdt_animation_destination.js` |
 | Shared shading and geometry | `rtdt_math.js`, `rtdt_world.js`, `rtdt_shade.js`, `raytracer-core.js`, etc. |
 
