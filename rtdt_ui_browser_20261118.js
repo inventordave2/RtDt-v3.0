@@ -72,7 +72,7 @@ var rtdt_ui_browser = (function () {
     }
     function render_animation_frame() {
         if (!playback_active) return;
-        var t=playback_frame/playback_fps;
+        var t=rtdt_job.frame_time(playback_frame,playback_fps);
         try {
             element('phyTime').value=String(t);
             phy_animator.at(t);
@@ -96,7 +96,7 @@ var rtdt_ui_browser = (function () {
             return;
         }
         var end=Number(element('phyEndTime').value);
-        playback_fps=(phy_model.timeline&&phy_model.timeline.fps)||24;
+        playback_fps=packFpsOverride||(phy_model.timeline&&phy_model.timeline.fps)||24;
         if (!isFinite(end) || end<=0 || !isFinite(playback_fps) ||
             playback_fps<=0 || end*playback_fps>240) {
             playback_status('Playback must contain between 2 and 240 frames. Adjust the end time.','error');
@@ -219,19 +219,11 @@ var rtdt_ui_browser = (function () {
                 originalCamera.field_of_view || Math.PI/4);
             renderCamera.setCTransform(originalCamera.transform);
             RtDtState.scene.c = renderCamera;
-            var result = await rtdt_animation_batch.run({
-                sink:sink, startFrame:start, endFrame:end, fps:fps,
-                width:width, height:height,
+            var result = await rtdt_job.render_animation({
+                sink:sink,animator:phy_animator,sceneState:RtDtState.scene,
+                camera:renderCamera,quality:depth,
+                startFrame:start,endFrame:end,fps:fps,width:width,height:height,
                 cancelled:function () { return export_cancelled; },
-                render_frame:function (index,time) {
-
-                    if (export_cancelled)
-                        throw new Error('Animation export cancelled');
-                    phy_animator.at(time);
-                    var renderWorld = rtdt_render_core.create_world(RtDtState.scene);
-                    return rtdt_render_core.render_pixels(renderWorld,renderCamera,
-                        width,height,depth);
-                },
                 on_progress:function (done,total,name) {
 
                     progress.value = Math.round(100*done/total);
@@ -603,16 +595,7 @@ var rtdt_ui_browser = (function () {
 
     function phy_bindings() {
 
-        var bindings = {};
-        var objects = RtDtState.scene.o && RtDtState.scene.o.s ? RtDtState.scene.o.s : [];
-        for (var i = 0; i < objects.length; i++) {
-
-            bindings[String(i)] = objects[i];
-            var alias = objects[i].id2;
-            if (alias && !Object.prototype.hasOwnProperty.call(bindings, String(alias)))
-                bindings[String(alias)] = objects[i];
-        }
-        return bindings;
+        return rtdt_job.animation_bindings(RtDtState.scene);
     }
 
     function apply_phy() {
@@ -1228,58 +1211,46 @@ var rtdt_ui_browser = (function () {
         var canvas = element('canvas');
         canvas.width = width;
         canvas.height = height;
-        var render_world = rtdt_render_core.create_world(RtDtState.scene);
-
-        pixels = new Array(width * height);
+        var session = rtdt_job.create_session({
+            sceneState:RtDtState.scene,width:width,height:height,quality:depth
+        });
+        pixels = session.pixels;
         render_index = 0;
         cancelled = false;
         running = true;
         element('btnRender').disabled = true;
         element('btnAbort').style.display = 'block';
-        render_progress(0, true);
-        viewport_meta(width + ' × ' + height + ' · rendering');
+        render_progress(0,true);
+        viewport_meta(width+' × '+height+' · rendering');
         workflow(2);
-        status('renderStatus', 'Rendering...', 'info');
+        status('renderStatus','Rendering...','info');
 
         function next_batch() {
 
             if (cancelled) {
 
+                session.cancel();
                 pixels = null;
-                finish_render('Render stopped.', 'info');
+                finish_render('Render stopped.','info');
                 return;
             }
-
             try {
 
-                var count = Math.min(4, height - render_index);
-
-                for (var row = 0; row < count; row++) {
-
-                    var y = render_index + row;
-                    for (var x = 0; x < width; x++) {
-
-                        var c = rtdt_render_core.trace_pixel(
-                            render_world, RtDtState.scene.c, x, y, depth);
-
-                        pixels[y * width + x] = c;
-                    }
-                }
-
-                render_index += count;
-                draw_scanlines(canvas, count);
-                render_progress(Math.round(100 * render_index / height), true);
-                status('renderStatus', 'Rendering ' +
-                    Math.round(100 * render_index / height) + '%', 'info');
-
-                if (render_index < height)
-                    setTimeout(next_batch, 0);
+                var progress = session.step(4);
+                var count = progress.row-render_index;
+                render_index = progress.row;
+                draw_scanlines(canvas,count);
+                render_progress(Math.round(100*render_index/height),true);
+                status('renderStatus','Rendering '+
+                    Math.round(100*render_index/height)+'%','info');
+                if (!progress.done)
+                    setTimeout(next_batch,0);
                 else
-                    finish_render('Render complete: ' + width + ' × ' + height, 'success');
+                    finish_render('Render complete: '+width+' × '+height,'success');
             } catch (error) {
 
                 pixels = null;
-                finish_render('Render failed: ' + error.message, 'error');
+                finish_render('Render failed: '+error.message,'error');
             }
         }
 
