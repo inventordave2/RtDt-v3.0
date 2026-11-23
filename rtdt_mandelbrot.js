@@ -157,8 +157,9 @@ var rtdt_mandelbrot = (function () {
     function flight_phy(source,id) {
 
         var keyframes=flight_path(source);
-        var fps=parameter(source&&source.fps===undefined?24:
-            source&&source.fps,parameters(source||{}),'fps');
+        var spec=source || {};
+        var fps=parameter(spec.fps===undefined?24:spec.fps,
+            parameters(spec),'fps');
         return {version:1,timeline:{fps:fps,
             duration:keyframes[keyframes.length-1].time},
             objects:[{id:String(id===undefined?'0':id),
