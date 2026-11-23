@@ -11,7 +11,7 @@
     "start": "node cli.js --help",
     "render": "node cli.js --scene scene1 --output render.png",
     "render:preview": "node cli.js --scene scene1 --width 150 --height 84 --output preview.png",
-    "test": "npm run test:core && npm run test:cli && npm run test:pack && npm run test:animation && npm run test:cloud && npm run test:browser-adapters && npm run test:benchmark",
+    "test": "npm run test:core && npm run test:cli && npm run test:pack && npm run test:animation && npm run test:cloud && npm run test:browser-adapters && npm run test:benchmark && npm run test:docs",
     "test:core": "node tests/scene-render-smoke.test.js && node tests/scene-expressions.test.js && node tests/rgb-bmp.test.js && node tests/scene-assets-layout.test.js && node tests/job-executor.test.js",
     "test:cli": "node tests/cli-image-formats.test.js && node tests/scene-cli-parity.test.js",
     "test:pack": "node tests/rdt-pack.test.js",
@@ -25,7 +25,8 @@
     "test:scene-assets": "node tests/scene-assets-layout.test.js",
     "test:benchmark": "node tests/benchmark.test.js",
     "benchmark": "node rtdt_benchmark_node.js",
-    "benchmark:quick": "node rtdt_benchmark_node.js --iterations 2 --warmups 1"
+    "benchmark:quick": "node rtdt_benchmark_node.js --iterations 2 --warmups 1",
+    "test:docs": "node tests/docs.test.js"
   },
   "keywords": [
     "raytracer",
