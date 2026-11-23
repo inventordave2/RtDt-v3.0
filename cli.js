@@ -68,6 +68,7 @@ try {
     loadScript(path.join(repoRoot, 'rtdt_animation_export.js'));
     loadScript(path.join(repoRoot, 'rtdt_animation_destination.js'));
     loadScript(path.join(repoRoot, 'rtdt_animation_batch.js'));
+    loadScript(path.join(repoRoot, 'rtdt_job.js'));
 
 	loadScript(path.join(repoRoot, 'rtdt_scene_assets.js'));
 	loadScript(path.join(repoRoot, 'rtdt_scene_format.js'));
@@ -510,13 +511,7 @@ async function renderScene() {
 				throw new Error('Expected a .phy animation file');
 			var phy = rtdt_aetherore.parse_phy(cliConfig.phyFile ?
                 fs.readFileSync(cliConfig.phyFile, 'utf8') : declaredPhySource.source);
-			var bindings = {};
-			RtDtState.scene.o.s.forEach(function (shape, index) {
-			
-				bindings[String(index)] = shape;
-				if (shape.id2 && !Object.prototype.hasOwnProperty.call(bindings,String(shape.id2)))
-					bindings[String(shape.id2)] = shape;
-			});
+			var bindings = rtdt_job.animation_bindings(RtDtState.scene);
 			if (cliConfig.phyFrame !== null && cliConfig.phyTime !== null)
 				throw new Error('Choose either --time or --frame, not both');
 			var fps = phy.timeline && phy.timeline.fps || 30;
@@ -562,16 +557,11 @@ async function renderScene() {
                     log('ZIP written: '+destinationFile);
                 }
             });
-            return rtdt_animation_batch.run({
-                sink:sink, fps:frameRate, width:cliConfig.width,height:cliConfig.height,
+            return rtdt_job.render_animation({
+                sink:sink,animator:batchAnimator,sceneState:RtDtState.scene,
+                fps:frameRate,width:cliConfig.width,height:cliConfig.height,
+                quality:cliConfig.quality,
                 startFrame:cliConfig.startFrame,endFrame:endFrame,
-                render_frame:function (index,time) {
-
-                    batchAnimator.at(time);
-                    var batchWorld = rtdt_render_core.create_world(RtDtState.scene);
-                    return rtdt_render_core.render_pixels(batchWorld,RtDtState.scene.c,
-                        cliConfig.width,cliConfig.height,cliConfig.quality);
-                },
                 on_progress:function (done,total) {
 
                     if (done === 1 || done % 24 === 0 || done === total)
@@ -583,12 +573,10 @@ async function renderScene() {
             });
         }
 
-		// Create world for rendering
-		const renderWorld = rtdt_render_core.create_world(RtDtState.scene);
-		
-		// Render synchronously
+		// Render synchronously through the shared job executor
 		const startTime = Date.now();
-		const pixels = renderSceneSync(renderWorld, RtDtState.scene.c, cliConfig.quality);
+		const pixels = rtdt_job.render_still({sceneState:RtDtState.scene,
+            width:cliConfig.width,height:cliConfig.height,quality:cliConfig.quality});
 		const elapsed = (Date.now() - startTime) / 1000;
 		
 		log('Render completed in ' + elapsed.toFixed(2) + ' seconds');
