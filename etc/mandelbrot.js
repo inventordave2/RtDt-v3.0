@@ -1,91 +1,36 @@
-// https://rosettacode.org/wiki/Mandelbrot_set#JavaScript
+/* Canvas preview adapter for the shared RtDt Mandelbrot engine.
+ * The original plot/colour scheme lives in rtdt_mandelbrot.texture().
+ * Loading this utility no longer creates or edits a document automatically.
+ */
+function mandel_iterate(cx,cy,maxIterations) {
 
-
-// The plotting bit.
-function mandel_iterate(cx, cy, maxIter) {
-  
-  var x = 0.0;
-  var y = 0.0;
-  var xx = 0;
-  var yy = 0;
-  var xy = 0;
- 
-  var i = maxIter;
-  while (i-- && xx + yy <= 4) {
-    xy = x * y;
-    xx = x * x;
-    yy = y * y;
-    x = xx - yy + cx;
-    y = xy + xy + cy;
-  }
-  return maxIter - i;
+    var engine=typeof rtdt_mandelbrot!=='undefined' ?
+        rtdt_mandelbrot : require('../rtdt_mandelbrot');
+    return engine.iterate(cx,cy,maxIterations);
 }
 
-// The main "mandelbrot" function. 
-function mandelbrot(canvas, xmin, xmax, ymin, ymax, iterations) {
-	
-  var width = canvas.width;
-  var height = canvas.height;
- 
-  var ctx = canvas.getContext('2d');
-  var img = ctx.getImageData(0, 0, width, height);
-  var pix = img.data;
- 
-  for (var ix = 0; ix < width; ++ix)
-    for (var iy = 0; iy < height; ++iy)	{
-		
-      var x = xmin + (xmax - xmin) * ix / (width - 1);
-      var y = ymin + (ymax - ymin) * iy / (height - 1);
-      var i = mandel_iterate(x, y, iterations);
-      var ppos = 4 * (width * iy + ix);
- 
-      if (i > iterations) {
-		  
-        pix[ppos] = 0;
-        pix[ppos + 1] = 0;
-        pix[ppos + 2] = 0;
-      }
-	  else {
-		  
-        var c = 3 * Math.log(i) / Math.log(iterations - 1.0);
- 
-        if (c < 1) {
-			
-          pix[ppos] = 	255 * c;
-          pix[ppos + 1]  = 0;
-          pix[ppos + 2]  = 0;
-        }
-        else if ( c < 2 ) {
-			
-          pix[ppos] = 		255;
-          pix[ppos + 1] = 	255 * (c - 1);
-          pix[ppos + 2] = 	0;
-        }
-		else {
-			
-          pix[ppos] = 		255;
-          pix[ppos + 1] = 	255;
-          pix[ppos + 2] = 	255 * (c - 2);
-        }
-      }
-	  
-      pix[ppos + 3] = 255;
+function mandelbrot(canvas,xmin,xmax,ymin,ymax,iterations) {
+
+    if(!canvas || !canvas.getContext)
+        throw new Error('Mandelbrot preview requires a canvas');
+    var engine=typeof rtdt_mandelbrot!=='undefined' ?
+        rtdt_mandelbrot : require('../rtdt_mandelbrot');
+    var texture=engine.texture({
+        width:canvas.width,height:canvas.height,
+        xmin:xmin,xmax:xmax,ymin:ymin,ymax:ymax,
+        iterations:iterations
+    });
+    var context=canvas.getContext('2d');
+    var image=context.createImageData(texture.width,texture.height);
+    for(var index=0;index<texture.width*texture.height;index++) {
+
+        image.data[4*index]=texture.data[3*index];
+        image.data[4*index+1]=texture.data[3*index+1];
+        image.data[4*index+2]=texture.data[3*index+2];
+        image.data[4*index+3]=255;
     }
-
-  ctx.putImageData(img, 0, 0);
-  
-  return;
+    context.putImageData(image,0,0);
+    return texture;
 }
-
-
-// Here is the entry-point code:
-
-var canvas = document.createElement('canvas');
-canvas.width = 900;
-canvas.height = 600;
- 
-document.body.insertBefore(canvas, document.body.childNodes[0]);
-
-// Then call the fnc.
-mandelbrot(canvas, -2, 1, -1, 1, 1000);
-
+if(typeof module!=='undefined'&&module.exports)
+    module.exports={mandel_iterate:mandel_iterate,mandelbrot:mandelbrot};
