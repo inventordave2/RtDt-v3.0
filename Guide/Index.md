@@ -1,34 +1,34 @@
-# RtDt Guides
+# RtDt user and developer guides
 
-The root [README](../README.md) remains the GitHub project front page.
-
-**Licensing:** [MIT community licence](../LICENSE) and [separate premium licensing policy](../LICENSING.md).
+These documents describe the supported code on the repository's current `main` branch. The [README](../README.md) is the project front page.
 
 ## Getting started
-- [CLI](CLI.md)
+
+- [CLI usage and options](CLI.md)
 - [Quick reference](Quick-reference.md)
-- [Deployment](Deployment.md)
+- [Scene file format and dependencies](Scene-files.md)
+- [Create a scene and its assets](Scene-pack-creation.md)
+- [RtDt .rdt job/pack format](RDT-pack-format.md)
+- [Included sample scenes](Sample-scenes.md)
+- [Browser deployment and verification](Deployment.md)
 
-## Scene files and sample packs
-- [Scene files](Scene-files.md)
-- [Scene files quickstart](Scene-files-quickstart.md)
-- [Create a scene pack](Scene-pack-creation.md)
-- [RtDt .rdt pack manifest format](RDT-pack-format.md)
-- [Beetle Psychedelia sample](../samples/vw-beetle-psychedelia.scene)
+## Architecture and development
 
-## Development
-- [Architecture](Architecture.md)
-- [Historical development archive](../docs/archive/rtdt-development-docs/README.md)
-
-## Resource directories
-- [Sample scenes](Sample-scenes.md)
-- [OBJ assets](OBJ-assets.md)
-- [Image assets](Image-assets.md)
-- [User assets](User-assets.md)
-- [CLI internals](CLI-internals.md)
-- [CLI quickstart](CLI-quickstart.md)
-- [Development notes](Development-notes.md)
-
-## Refactoring references
-- [Render control flow](Render-control-flow.md)
+- [Current shared execution architecture](Architecture.md)
+- [Render and animation control flow](Render-control-flow.md)
+- [Node CLI internals](CLI-internals.md)
 - [Coding style](Coding-style.md)
+- [Native benchmarking and test targets](Benchmarking.md)
+- [Cloud credentials and storage security](Cloud-credentials.md)
+
+## Assets
+
+- [OBJ meshes](OBJ-assets.md)
+- [Image resources](Image-assets.md)
+- [User asset directory](User-assets.md)
+
+## Licensing
+
+- [Community MIT licence](../LICENSE)
+- [Community and separately licensed products](../LICENSING.md)
+- [Lee Perry-Smith sample attribution](../samples/lee-perry-smith-head/LICENSE.txt)

@@ -1,30 +1,49 @@
-# RtDt CLI
+# RtDt Node.js CLI
 
-The single supported Node.js entrypoint is `cli.js` at the repository root, also installed as the `rtdt` command by npm.
+From the repository root, install dependencies with `npm install`. The supported entrypoint is `cli.js` (also exposed as the npm `rtdt` bin). Use `node cli.js --help` for the authoritative option inventory.
 
-Run `npm install` once. Then render without an external converter:
+## Single images
 
-```sh
-node cli.js --scene scene1 --width 160 --height 90
+~~~sh
 node cli.js --scene scene1 --width 160 --height 90 --output preview.png
-node cli.js --scene scene1 --width 160 --height 90 --output preview.jpg --jpeg-quality 92
-node cli.js --scene scene1 --width 160 --height 90 --output preview.bmp
-node cli.js --scene scene1 --width 160 --height 90 --output preview.ppm
-node cli.js --scene scene1 --width 160 --height 90 --output c64.bmp --bmp-palette c64
-node cli.js --scene scene1 --width 160 --height 90 --output ansi256.bmp --bmp-palette ansi256
-node cli.js --scene scene1 --width 160 --height 90 --output ansi16.bmp --bmp-palette ansi16
-node cli.js --scene scene1 --width 160 --height 90 --output html.bmp --bmp-palette html
+node cli.js --scene-file samples/prism-garden.scene --width 160 --height 90 --output prism.jpg --jpeg-quality 90
+node cli.js --scene-file samples/orbit-yaml.scene.yaml --output orbit.bmp
+node cli.js --scene scene1 --output preview.ppm
+node cli.js --scene scene1 --output c64.bmp --bmp-palette c64
 node cli.js --scene scene1 --format png --output-dir renders
-```
+~~~
 
-Without an output filename, PNG is written to `render.png`. The extension selects the actual encoder; conflicting `--format` and filename extensions produce an error rather than incorrect bytes. `--output-dir` creates the directory. `--jpeg-quality` sets JPEG quality (1–100), distinct from the renderer's `--quality` sample count.
+Output format is inferred from `--output` (PNG, JPEG, BMP, PPM) or selected with a matching `--format`. Indexed BMP palettes include `c64`, `ansi16`, `ansi256` and `html`. `--jpeg-quality` changes JPEG encoding; `--quality` controls renderer recursion depth. `--height` and `-H` both set height; `-h` shows help.
 
-BMP output supports true-colour 24-bit RGB (default), 8-bit ANSI256, 4-bit Commodore 64, 4-bit ANSI/VT100 (use `ansi16` or `vt100`), and 8-bit HTML named colours. The HTML indexed palette contains 139 unique RGB entries from the canonical 148 named CSS colour names, deduplicating aliases. Quantisation maps each pixel to the nearest palette entry.
+## Scene animation and batches
 
-Use `--height` or `-H` for height. `-h` is reserved for help.
+~~~sh
+node cli.js --scene-file samples/orbit.scene --phy samples/orbit/orbit-formula.phy --frame 12 --width 160 --height 90 --output orbit-frame.png
+node cli.js --scene-file samples/orbit.scene --phy samples/orbit/orbit-formula.phy --batch --start-frame 0 --end-frame 7 --width 160 --height 90 --destination zip --zip-file renders/orbit.zip
+node cli.js --scene-file samples/orbit.scene --phy samples/orbit/orbit-formula.phy --batch --start-frame 0 --end-frame 7 --destination folder --output-dir renders/orbit
+~~~
 
-Scene input remains built-in scene constructors; `--config`, `--batch`, and `--scene-file` are pending separate integration. AetherOre `.phy` animation support remains available through `--phy`, `--time`, and `--frame`.
+AetherOre uses `.phy` timeline data and applies a selected pose via `--frame` or `--time`. A batch produces numbered PNGs and `manifest.json`. The CLI can also upload to Google Drive, Dropbox or OneDrive, provided the provider is configured and authenticated. See [cloud credentials](Cloud-credentials.md).
 
-## Checks
+## Reproducible .rdt packs
 
-`npm test` runs scene/geometry checks and real CLI render/signature assertions for PNG, JPEG, all BMP palettes, and PPM. See [Guide index](Index.md).
+~~~sh
+node cli.js --lint-pack samples/orbit.rdt
+node cli.js --job samples/orbit.rdt
+~~~
+
+An `.rdt` file specifies its scene, optional animation, render settings and output destination. Paths resolve relative to the pack location. `--job` cannot be mixed with separate rendering switches; edit the manifest instead. See the [pack format guide](RDT-pack-format.md).
+
+The standalone `rtdt_cli_config.js` parser does **not** make `--config` a supported CLI option. Use `--job` for configuration-driven rendering.
+
+## Verification and benchmarks
+
+~~~sh
+npm test
+npm run test:cli
+npm run test:pack
+npm run test:animation:full
+npm run benchmark:quick
+~~~
+
+See [benchmark methods](Benchmarking.md) and [CLI internals](CLI-internals.md).

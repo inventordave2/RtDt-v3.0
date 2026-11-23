@@ -1,103 +1,82 @@
-# RtDt — Raytracer for Node.js and Web UI
+# RtDt — JavaScript raytracer for Node.js and the WebApp
 
-![Two RtDt robot mascots exploring the raytracer on a floating holographic screen](img/rtdt-robots-readme.jpg)
+![RtDt robot mascots at a floating rendering panel](img/rtdt-robots-readme.jpg)
 
-In active development.
+RtDt is a JavaScript raytracer with a Node.js command-line interface and a static browser WebApp. Both frontends use the same geometric/shading core, the shared `rtdt_job.js` execution API, AetherOre `.phy` animation, and PNG/PPM encoders. Browser display, file access and authentication remain platform adapters. The project is under active development.
 
-RtDt is a JavaScript raytracer for Node.js and a browser WebApp, with triangle meshes (including barycentric smooth normals), reflections, refraction, configurable cameras and lights, BVH subdivision, and AetherOre `.phy` keyframe animation. Designed and implemented by Dave as a reference for native-C porting and modelling.
+Supported capabilities include primitives and OBJ triangle meshes, smooth per-corner normals and UV texture coordinates, a point light, shadows, reflection/refraction, BVH subdivision, declarative scene descriptions, `.rdt` job packs, and frame-by-frame animation.
 
-## Licence and editions
+## Licensing
 
-**RtDt Community is licensed under the [MIT License](LICENSE).** Developers
-may use, modify, integrate, redistribute and commercialise the community
-source under MIT's notice-preservation condition.
+RtDt Community source and documentation are offered under the [MIT licence](LICENSE), except separately licensed third-party materials. The copyright holder may offer separate source-readable premium integrations or enhancements under independent licences; these do not limit the community MIT grant. Read [LICENSING.md](LICENSING.md). The Lee Perry-Smith head sample carries its own [CC BY 3.0 attribution](samples/lee-perry-smith-head/LICENSE.txt).
 
-The RtDt copyright holder reserves the right to offer **separately licensed,
-source-readable premium enhancements, integrations, tools and other products**
-under independent commercial terms. Those terms apply only to the explicitly
-identified premium material; they do **not** limit rights granted in the
-MIT-licensed community source.
+## Run the WebApp
 
-See the [community and premium licensing policy](LICENSING.md) for
-scope and distribution guidance. Third-party samples and assets retain
-their own licences, including the [Lee Perry-Smith CC BY 3.0 notice](samples/lee-perry-smith-head/LICENSE.txt).
+[Open the hosted WebApp](https://inventordave2.github.io/RtDt-v3.0/webapp.html), or serve the repository from its root:
 
-## Try RtDt
-
-**Browser:** [Open RtDt on GitHub Pages](https://inventordave2.github.io/RtDt-v3.0/webapp.html). For local development, serve this repository over HTTP rather than opening `file://`:
-
-```sh
+~~~sh
 python -m http.server 8000
 # Open http://localhost:8000/webapp.html
-```
+~~~
 
-The WebApp now opens with **RtDt repository · featured scenes** selected. Choose a featured scene, click **Load repository scene**, then **Start render**; the built-in **scene presets** remain available under the Scene collection dropdown. They are complete scenes, not individual primitive shape-creation commands. The WebApp resolves declared hosted assets automatically. For your own local `.scene` files, select any needed local `.obj`, texture and `.phy` dependencies explicitly.
+Select a featured scene and click **Load repository scene**, then **Start render**. For a `.rdt` pack, select **RtDt pack (.rdt)** under Scene collection. Choose the hosted Orbit Studio pack or select a **local pack folder** containing the manifest and dependencies. A local scene can also be loaded separately with associated asset files.
 
-**Node.js:** the root `cli.js` writes genuine PNG, JPEG, BMP and legacy PPM images. Run `npm install`, then select the format by filename:
+The WebApp renders to a canvas, exports still images, and exports AetherOre frame sequences to ZIP, a user-selected folder (where supported), or an authenticated cloud destination. Cloud logins and native folder permissions need provider/OS-specific verification; automated tests use mocks for those integrations.
 
-```sh
+## Run Node.js
+
+~~~sh
+npm install
 node cli.js --help
 node cli.js --list-scenes
 node cli.js --scene scene1 --width 160 --height 90 --output preview.png
-```
+node cli.js --scene-file samples/prism-garden.scene --width 160 --height 90 --output prism.jpg
+node cli.js --lint-pack samples/orbit.rdt
+node cli.js --job samples/orbit.rdt
+~~~
 
-Use `--output preview.jpg` for JPEG, `--output preview.bmp` for BMP, and `--bmp-palette ansi256|ansi16|c64|html` for indexed BMP. `--output-dir` is available and creates directories. JSON/YAML `--config`, `--batch` and Node `.scene` loading remain pending.
+The CLI supports PNG, JPEG, RGB/indexed BMP and P3 PPM still images; `.scene` JSON and the supported declarative YAML subset; `.phy` frame/time selection; batch ZIP/folder output; and `.rdt` pack execution. Use `node cli.js --help` for all options. The `--config` switch is **not** wired into the supported CLI: use `--job pack.rdt` for reproducible jobs.
 
-## Sample scenes and assets
+See [CLI usage](Guide/CLI.md), [scene files](Guide/Scene-files.md), and [the .rdt pack guide](Guide/RDT-pack-format.md).
 
-- **[Beetle Psychedelia](samples/vw-beetle-psychedelia.scene)** — original stylised classic Beetle-inspired car with psychedelic rainbow-swirl texture, chrome trim, wheels, windows, and studio floor. Choose it from featured scenes; start at Preview resolution.
+## Included examples
 
-- **[Aurora Orrery · Celestial Observatory](samples/aurora-orrery.scene)**: 67-object original high-detail scene featuring three independently shaded smooth-normal orbital OBJ rings ([gold](samples/aurora-orrery/orrery-gold-ring.obj), [cyan](samples/aurora-orrery/orrery-cyan-ring.obj), [rose](samples/aurora-orrery/orrery-rose-ring.obj)), reusable [faceted crystals](samples/aurora-orrery/faceted-crystal.obj), illuminated planetary spheres, a reflective floor and celestial accents. Four OBJ assets are declared and loaded automatically; large meshes receive BVH subdivision. **Start at Preview (160×90)** before increasing resolution, as triangle raytracing can be CPU-intensive.
-- [Orbit Studio](samples/orbit.scene) + [AetherOre `.phy`](samples/orbit/orbit.phy): declarative JSON v1 sample and keyframe animation.
-- [Rocket to Rainbow Planet](samples/rocket-to-rainbow-planet.scene): a **new colourful scene with 14 objects**, including [smooth-normal rocket body](samples/rocket-to-rainbow-planet/rocket_hull.obj), [fins](samples/rocket-to-rainbow-planet/rocket_fins.obj), [engine](samples/rocket-to-rainbow-planet/rocket_engine.obj) and [satellite](samples/rocket-to-rainbow-planet/rocket_satellite.obj). Four OBJ dependencies are automatically declared; the browser importer now preserves OBJ `vn` normals for smooth triangles.
-- [Prism Garden](samples/prism-garden.scene): colourful primitives and a reflective stage.
-- [Cosmic Orbs](samples/cosmic-orbs.scene): vibrant planets and moonlike spheres.
-- [Neon City](samples/neon-city.scene): geometric towers on a reflective avenue.
-- [Reflection Studio](samples/reflection-studio.scene): a compact reflection and material showcase.
-- [Lee Perry-Smith 3D head scan](samples/lee-perry-smith-head.scene): a scanned human portrait containing 17,684 UV-mapped triangles, with scene-private [OBJ geometry](samples/lee-perry-smith-head/lee-perry-smith-head.obj) and [CC BY 3.0 attribution](samples/lee-perry-smith-head/LICENSE.txt). **Geometry preview only:** the original photographic skin image is not yet bundled, and true area/spherical light sampling is still pending.
-- [Pyramid OBJ](obj/pyramid.obj) and the existing Earth JPEG sample.
+- [Orbit Studio](samples/orbit.scene), [pack manifest](samples/orbit.rdt), and [animation](samples/orbit/orbit-formula.phy)
+- [Rocket to Rainbow Planet](samples/rocket-to-rainbow-planet.scene) with OBJ assets
+- [Aurora Orrery](samples/aurora-orrery.scene) and its orbital-ring OBJ meshes
+- [Beetle Psychedelia](samples/vw-beetle-psychedelia.scene), [Prism Garden](samples/prism-garden.scene), [Cosmic Orbs](samples/cosmic-orbs.scene), [Neon City](samples/neon-city.scene), and [Reflection Studio](samples/reflection-studio.scene)
+- [Lee Perry-Smith scanned head](samples/lee-perry-smith-head.scene): geometry preview without the original photographic skin image
 
-All **nine hosted scenes** are available directly in the default featured-scene dropdown. The `.scene` documents declare their hosted OBJ dependencies; no manual upload is needed. Assets are declared relative to each `.scene` file: `aurora-orrery/` or `rocket-to-rainbow-planet/` contain private OBJ geometry; `shared/` is for reusable assets. The browser JSON loader accepts a flat list of scene objects, while the renderer internally groups mesh triangles into bounding-volume hierarchies. The dedicated auto-render preview gallery remains future work. The showcase composition is newly added and needs full live-browser visual validation.
+See [sample scenes](Guide/Sample-scenes.md) for links and asset guidance.
 
-Browser JSON `.scene` files may specify a top-level `"background": [r, g, b]` (normalized RGB); the default is black. Ray misses use that colour, without changing genuinely black surfaces. The shared Node renderer uses the same behaviour.
+## Architecture
 
-## Current architecture
-
-| Component | Responsibility |
+| Layer | Primary modules |
 | --- | --- |
-| `webapp.html`, `rtdt_ui_browser_20261118.js` | Browser UI, scene selection, progress, export, controls, animation playback |
-| `raytracer-core.js` | Shared renderer; `RtDtState.scene`, `RtDtState.meshImport`, `RtDtState.renderOptions` |
-| `rtdt_scene_browser.js` | Safe declarative browser `.scene` JSON v1 construction |
-| `rtdt_scene_assets.js` | Repository/local asset resolution, OBJ triangle and smooth-normal loading |
-| `rtdt_aetherore.js` | `.phy` keyframe interpretation and pose interpolation |
-| `rtdt_colour.js`, `rtdt_image_io_browser.js` | RGB colour, PNG/JPEG/BMP browser export, legacy PPM |
-| `cli.js` | Node rendering of built-in scenes; PNG/JPEG/BMP/PPM output |
-| `rtdt_image_io_node.js` | Active Node PNG/JPEG/BMP/PPM encoder, including indexed palettes |
-| `rtdt_cli_config.js` | Staged configuration and batch parser, not yet integrated |
-| `rtdt_scene_loader.js` | Separate experimental YAML scene parsing; scene construction limitations remain |
+| CLI adapter | `cli.js`, `rtdt_image_io_node.js`, `rtdt_scene_assets_node.js` |
+| Browser adapter | `webapp.html`, `rtdt_ui_browser_20261118.js`, `rtdt_image_io_browser.js` |
+| Shared execution | `rtdt_job.js`, `rtdt_render_core.js`, `rtdt_animation_batch.js` |
+| Shared scene and pack contracts | `rtdt_scene_format.js`, `rtdt_scene_browser.js`, `rtdt_pack.js`, `rtdt_scene_assets.js` |
+| Shared animation/output | `rtdt_aetherore.js`, `rtdt_png.js`, `rtdt_ppm.js`, `rtdt_animation_export.js`, `rtdt_animation_destination.js` |
+| Shared shading and geometry | `rtdt_math.js`, `rtdt_world.js`, `rtdt_shade.js`, `raytracer-core.js`, etc. |
 
-### Lighting and animation
+Both frontends now use shared still-render sessions and shared animation batch orchestration. **Not every feature is byte-identical across platforms:** JPEG uses different encoders, some browser interactions have no direct CLI command, and runtime-specific asset/authentication adapters remain. The renderer still uses global scene state rather than independent parallel renderer instances. See [architecture](Guide/Architecture.md).
 
-The current renderer supports a **24-bit RGB point light**. **Area and spherical light sampling are not implemented** yet. The WebApp can apply `.phy` poses and attempts sequential raytraced animation frames; there is no implemented stitched-video/GIF export. Keyframe expression evaluation is not a general Newtonian physics integrator.
+## Testing and benchmarking
 
-### Known limitations and validation
+~~~sh
+npm test                       # Node regression suite, including benchmark smoke test
+npm run test:animation:full    # Full 192-frame Orbit Studio ZIP regression
+npm run test:browser           # Optional Playwright/Chromium integration
+npm run benchmark:quick        # Small end-to-end benchmark pass
+npm run benchmark              # Default warmups and repeated runs
+node rtdt_benchmark_node.js --list
+~~~
 
-- The `Data is not defined` scene-load regression was fixed in the group constructor. Built-in and JSON scene construction/rendered-pixel tests passed. **Full live-browser interaction/render verification remains outstanding.**
-- The obsolete `raytracer.html`, `raytracer.js` and `raytracer-ui.js` entrypoints have been removed; the supported browser entry is `webapp.html`. Historical examples remain in the documentation archive.
-- CLI image format parity, indexed BMP palettes, output directory, and help/height shorthand are implemented; `--config`, `--batch` and Node `.scene` support remain planned.
-- YAML parser support must not be confused with complete YAML scene construction.
-- Area and spherical light support, full renderer instance isolation, and the dedicated first-run auto-render gallery remain planned work.
+Benchmark profiles live in [benchmarks/profiles.json](benchmarks/profiles.json). Results are JSON and CSV under `benchmarks/results/`. These measure **end-to-end CLI job time**, including process startup, scene loading and output encoding; they are not isolated ray/s throughput or independent cross-renderer performance rankings. See [benchmark guide](Guide/Benchmarking.md).
 
-## Testing
+## Present limitations
 
-```sh
-npm test
-node tests/scene-render-smoke.test.js
-node tests/scene-expressions.test.js
-node tests/rgb-bmp.test.js
-node tests/scene-assets-layout.test.js
-```
+The current lighting model is a point light, not sampled area or spherical lighting. Normal/bump maps and full physically based path tracing are not implemented. The head-scan's photographic texture is not bundled. Live cloud-provider authorisation and OS credential stores are not certified by mock tests. `rtdt_scene_loader.js` is an additional experimental scene-loader implementation; the supported scene/pack paths use the shared declarative loaders. Treat performance comparisons across engines as workload-specific.
 
-`npm test` runs the four focused suites plus the Node CLI image-format integration suite. The scene smoke test and new scene-assets-layout test check scene construction, linked assets, real OBJ UVs, bilinear texture sampling and raytraced pixels; this is **not yet a whole-image CLI or live-browser end-to-end test**.
-
-See the [Guide index](Guide/Index.md) and [Architecture](Guide/Architecture.md), [CLI guide](Guide/CLI.md), [Scene-file guide](Guide/Scene-files.md), and [Deployment checklist](Guide/Deployment.md). Historical plans and completion reports have moved to [the development archive](docs/archive/rtdt-development-docs/README.md). See [creating scene packs](Guide/Scene-pack-creation.md) and [development notes](Guide/Development-notes.md).
+Read the [guide index](Guide/Index.md) for current documentation.

@@ -1,62 +1,54 @@
-# RtDt architecture — current development branch
+# RtDt architecture
 
-**Source of truth:** repository `main`, reviewed 17 November 2026. This file documents the code that exists, not the architecture originally proposed in `docs/archive/rtdt-development-docs/`.
-
-## Execution environments
-
-| Concern | Browser | Node.js |
-| --- | --- | --- |
-| Entrypoint | `webapp.html` | `cli.js` |
-| Loading | Ordered local script tags | `fs.readFileSync` + `vm.runInThisContext` in `cli.js` |
-| UI | `rtdt_ui_browser_20261118.js` and DOM/canvas | CLI arguments and stdout/stderr |
-| Scene selection | Built-ins or declarative JSON `.scene` | Built-in example factories (`--scene`) |
-| Scene files | `rtdt_scene_browser.js` (JSON v1) | `rtdt_scene_loader.js` YAML parser exists, incomplete and not wired into CLI options |
-| External assets | `rtdt_scene_assets.js`, local File API / same-origin fetch | `rtdt_objfile-node.js`, filesystem |
-| Output | PNG/JPEG via canvas, 24-bit RGB BMP, indexed BMP, P3 PPM | P3 PPM only |
-| Animations | `.phy` poses + experimental frame playback | `--phy` plus `--time` or `--frame` |
-
-## Module layers
-
-**Math and geometry:** `rtdt_math.js`, `rtdt_core.js`, `rtdt_matrix-transform.js`, `rtdt_matrix.js`, `rtdt_ray.js`, `rtdt_p+e.js`.
-
-**Lighting/rendering:** `rtdt_light.js`, `rtdt_material.js`, `rtdt_world.js`, `rtdt_shade.js`, `rtdt_pattern.js`, `rtdt_examples.js`, `raytracer-core.js`.
-
-**Runtime/state:** `raytracer-core.js` defines `RtDtState`. `RtDtState.scene` holds the active camera, point light, object group, texture images and presets; `RtDtState.meshImport` holds OBJ parsing offsets/bounds; `RtDtState.renderOptions.bvhThreshold` replaces the previous ambiguous `DataR.divideValue`. The old global identifiers `Data` and `DataR` should not be used in new active modules. **This is named global state, not full renderer instance isolation.** `WIDTH`, `HEIGHT` and additional globals still exist, and renders are not independent/parallel.
-
-**Browser adapters:** `rtdt_ui_browser_20261118.js`, `rtdt_objfile.js`, `rtdt_image_io_browser.js`, `rtdt_colour.js`, `rtdt_graphics.js`, `rtdt_scene_browser.js`, `rtdt_scene_assets.js`.
-
-**Node adapters:** `cli.js`, `rtdt_objfile-node.js`. `rtdt_scene_loader.js` provides experimental YAML parsing and safe restricted arithmetic but has unfinished transform composition and camera application.
-
-**Animation:** `rtdt_aetherore.js` parses JSON `.phy` v1, evaluates channels at a time, composes matrices and updates bound objects. Playback controls attempt sequential raytracing; this requires performance and browser integration testing.
-
-## Data and render flow
+RtDt uses **one JavaScript raytracing core and shared job API** in Node.js and the browser. Platform adapters acquire inputs, display progress, and save files.
 
 ~~~text
-WebApp: scene selection -> JSON parse -> declared asset resolution
-        -> camera/light/shapes in RtDtState.scene -> render -> canvas -> export
-CLI:    arguments -> built-in scene factory -> RtDtState.scene
-        -> renderSceneSync -> P3 PPM file
+Node CLI (cli.js)                 WebApp (webapp.html + browser UI)
+          |                                   |
+          +---------------+-------------------+
+                          |
+                   rtdt_job.js
+            render_still / create_session
+                render_animation
+                          |
+             rtdt_render_core.js
+             camera / raytracing core
+                          |
+           rtdt_animation_batch.js
+           AetherOre and image encoders
+                          |
+               Node/browser output sinks
 ~~~
 
-The WebApp is a static page; same-origin repository samples can be fetched under GitHub Pages. Local files must be explicitly selected by the user. Browser-local YAML scene rendering is **not implemented**.
+## Implemented responsibilities
 
-## Scene contract
+| Concern | Shared module | Node adapter | Browser adapter |
+| --- | --- | --- | --- |
+| Declarative scenes | `rtdt_scene_format.js`, `rtdt_scene_browser.js` | `rtdt_scene_assets_node.js` | `rtdt_scene_assets.js` + File API/fetch |
+| `.rdt` grammar | `rtdt_pack.js` | `rtdt_pack_lint_node.js` | `rtdt_pack_browser.js` |
+| Raytracing and world | `rtdt_render_core.js` and geometry/shading modules | `cli.js` | `rtdt_ui_browser_20261118.js` |
+| Still execution | `rtdt_job.render_still`, `create_session` | synchronous job | chunked UI session |
+| Animation | `rtdt_job.render_animation`, `rtdt_animation_batch.js`, `rtdt_aetherore.js` | ZIP/folder/cloud adapters | ZIP/folder/cloud adapters |
+| PNG/PPM | `rtdt_png.js`, `rtdt_ppm.js` | file writes | browser downloads |
+| Other still formats | colour/BMP helpers; separate JPEG codecs | `rtdt_image_io_node.js` | `rtdt_image_io_browser.js` |
+| Cloud upload | `rtdt_cloud_storage.js` | Node auth/storage | browser OAuth/storage |
 
-`.scene` v1 JSON supports a camera (from/to/up/fov), one point light (position/intensity), and objects (sphere, cube, plane, mesh) with position/scale/colour/material fields. External dependencies can be declared through `assets.mesh`, `assets.texture` and `assets.animation`; asset references on objects (`mesh`, `texture`) are also inspected. Check [SCENE_FILES_GUIDE.md](Scene-files.md) for a minimal working example and documented limitations.
+Node loads the shared JavaScript modules using an ordered bootstrap in `cli.js`; the WebApp uses ordered script tags in `webapp.html`. Both operate on `RtDtState.scene`, a process-global active scene, so the design **does not yet provide independent parallel renderer instances**. Browser UI controls and live playback orchestration are still browser-specific.
 
-The OBJ importer and renderer are not a full DCC or glTF pipeline. OBJ mesh UV albedo mapping via per-triangle barycentric coordinates is implemented; normal maps and height/bump shading are pending. Area/sphere lights and sampled soft-shadow lighting are pending.
+## Shared execution
 
-## BVH
+`rtdt_job.create_session({sceneState,width,height,quality})` returns a cancellable render session. `step(rowCount)` traces rows using `rtdt_render_core.render_rows` and can update the browser canvas between calls. `render_still(...)` finishes the same session synchronously in Node.
 
-`doDivide()` calls the active object's `divide(threshold)` where available. `bvhThreshold` is a **shape-count subdivision threshold**, not a render quality multiplier. The UI shows an optimisation status; benchmark complex meshes rather than assuming BVH helps small scenes.
+`rtdt_job.render_animation(...)` applies AetherOre poses, renders frames with the shared still executor, and sends encoded frames plus a manifest through the shared animation batch API. Destination adapters supply the output sink. The shared PNG and PPM encoders yield identical bytes for identical pixels; JPEG remains provider-specific.
 
-## Development risks and next steps
+For the user-facing job contract, see [.rdt manifests](RDT-pack-format.md). For entry and scheduling details, see [render control flow](Render-control-flow.md).
 
-1. **Restore and smoke-test scene loading and rendering** in real browsers following the state/asset/UI refactors; users have reported red errors and a scene-loaded mismatch.
-2. Repair built-in scene functions that still reference legacy browser rendering hooks, and establish reliable import success/failure transitions.
-3. Add Node/browser render correctness tests, then unify configuration and output encoders.
-4. Finish CLI `--config`, `--batch`, `--output-dir`, height/help shorthand and PNG/JPEG/BMP encoding.
-5. Move rendering state into per-render instances if parallel rendering is needed.
-6. Keep the removed legacy `raytracer.html`, `raytracer.js` and `raytracer-ui.js` entrypoints retired; use `webapp.html` and the shared renderer core. Historical examples are archived.
+## Scene and asset isolation
 
-See [PROJECT_INDEX.md](../PROJECT_INDEX.md) for a status matrix. Older roadmaps are retained as historical context, not completion evidence.
+Pack references are relative to the `.rdt` directory; scene-local assets are relative to the `.scene` directory. File permissions and acquisition differ in Node and browsers. The Node preflight checks local dependencies, while browser loader preflight uses fetch or user-selected folders. Both apply the same versioned pack grammar; full validation-adapter consolidation remains possible future work.
+
+## Verified scope and limitations
+
+The CI suite covers Node 20/22, CLI job execution, PNG parity, AetherOre batches and headless Chromium WebApp pack loading. Real cloud OAuth/provider uploads and native OS credential stores require external testing. Feature parity is not equivalent to identical UI controls. Sampled area/spherical lights, bump/normal-map shading and fully independent renderer instances are not implemented.
+
+See [CLI guide](CLI.md), [scene files](Scene-files.md), [benchmarking](Benchmarking.md) and [coding conventions](Coding-style.md).

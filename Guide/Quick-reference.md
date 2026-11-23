@@ -1,11 +1,29 @@
-# RtDt quick reference — active entrypoints
+# RtDt quick reference
 
-- WebApp: https://inventordave2.github.io/RTDT/webapp.html
-- Node CLI: `node cli.js --help`
-- Available built-in scenes: `node cli.js --list-scenes`
-- Node preview render: `node cli.js --scene scene1 --width 160 --height 90 --output preview.ppm`
-- Tests: `npm test`
-- Pack creation: [SCENE_PACK_CREATION.md](Scene-pack-creation.md)
-- Development reference: [docs/DEVELOPMENT_NOTES.md](../docs/DEVELOPMENT_NOTES.md)
+**WebApp:** https://inventordave2.github.io/RtDt-v3.0/webapp.html
 
-Node writes P3 PPM only and does not yet integrate `--config`, `--batch`, `--output-dir` or `--scene-file`. True area/spherical lights, photographic head-scan texture and full live browser verification remain pending. Historical completion claims and bootstrap CLI instructions have been archived under [docs/archive/rtdt-development-docs/](../docs/archive/rtdt-development-docs).
+**Command line:**
+
+~~~sh
+npm install
+node cli.js --help
+node cli.js --list-scenes
+node cli.js --scene scene1 --width 160 --height 90 --output preview.png
+node cli.js --scene-file samples/orbit.scene --output orbit.png
+node cli.js --lint-pack samples/orbit.rdt
+node cli.js --job samples/orbit.rdt
+~~~
+
+**Tests and benchmark:**
+
+~~~sh
+npm test
+npm run test:animation:full
+npm run test:browser
+npm run benchmark:quick
+npm run benchmark
+~~~
+
+**Formats:** `.rdt` is a job/pack manifest; `.scene` is a declarative scene; `.phy` is an AetherOre animation; `.obj` is mesh geometry. The WebApp can open the featured or a local-folder `.rdt` pack.
+
+**Further reading:** [CLI](CLI.md), [.rdt guide](RDT-pack-format.md), [scene files](Scene-files.md), [benchmarking](Benchmarking.md), [deployment](Deployment.md).
