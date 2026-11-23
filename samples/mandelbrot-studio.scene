@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "name": "Mandelbrot Studio",
+  "background": [
+    0.025,
+    0.035,
+    0.075
+  ],
+  "camera": {
+    "from": [
+      0,
+      2,
+      -8
+    ],
+    "to": [
+      0,
+      0,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "fov": 48
+  },
+  "light": {
+    "position": [
+      -6,
+      8,
+      -7
+    ],
+    "intensity": [
+      1,
+      1,
+      1
+    ]
+  },
+  "objects": [
+    {
+      "type": "sphere",
+      "name": "Fractal globe",
+      "position": [
+        -1.2,
+        0,
+        0
+      ],
+      "scale": [
+        1.1,
+        1.1,
+        1.1
+      ],
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "material": {
+        "ambient": 0.28,
+        "diffuse": 0.7,
+        "specular": 0.25,
+        "shininess": 65,
+        "reflective": 0.08
+      },
+      "surface": {
+        "type": "mandelbrot",
+        "width": 192,
+        "height": 128,
+        "iterations": 90,
+        "xmin": -2,
+        "xmax": 1,
+        "ymin": -1.25,
+        "ymax": 1.25,
+        "palette": "3*log10(i)/log10(iterations-1)"
+      }
+    },
+    {
+      "type": "plane",
+      "name": "Fractal floor",
+      "position": [
+        0,
+        -1.3,
+        0
+      ],
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "material": {
+        "ambient": 0.25,
+        "diffuse": 0.7,
+        "specular": 0.05
+      },
+      "surface": {
+        "type": "mandelbrot",
+        "width": 96,
+        "height": 96,
+        "iterations": 45,
+        "xmin": -2,
+        "xmax": 1,
+        "ymin": -1,
+        "ymax": 1,
+        "palette": "3*log10(i)/log10(iterations-1)"
+      }
+    }
+  ]
+}
