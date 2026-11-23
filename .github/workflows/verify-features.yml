@@ -12,6 +12,7 @@ on:
       - 'raytracer-core.js'
       - 'tests/**'
       - 'samples/**'
+      - 'benchmarks/**'
 
 permissions:
   contents: read
@@ -40,6 +41,9 @@ jobs:
         run: |
           node --check cli.js
           node --check rtdt_pack.js
+          node --check rtdt_job.js
+          node --check rtdt_ppm.js
+          node --check rtdt_benchmark_node.js
           node --check rtdt_pack_lint_node.js
           node --check rtdt_animation_batch.js
           node --check rtdt_cloud_storage.js
@@ -90,3 +94,26 @@ jobs:
           path: artifacts/
           if-no-files-found: ignore
           retention-days: 7
+
+  benchmark-report:
+    name: Native end-to-end benchmark reports (manual only)
+    if: github.event_name == 'workflow_dispatch'
+    needs: node-suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install runtime dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run native benchmark profiles
+        run: npm run benchmark
+      - name: Preserve JSON and CSV reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtdt-native-benchmark-reports
+          path: benchmarks/results/
+          if-no-files-found: error
+          retention-days: 30
