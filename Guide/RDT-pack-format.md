@@ -8,8 +8,8 @@ to render them, and where the output should go.
 their existing formats and are processed by their existing parsers.
 
 > Current specification: **RtDt Pack v1**, strict UTF-8 JSON. The `.rdt`
-> extension is mandatory for pack manifests; this is **not** the old
-> `config.rdt` sketch. JavaScript object literals, comments, trailing commas,
+> extension is mandatory for pack manifests. JavaScript object literals,
+> comments, trailing commas,
 > environment variables and executable expressions are not allowed.
 
 ## Quick start: create your first pack
