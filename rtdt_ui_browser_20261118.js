@@ -1564,7 +1564,7 @@ var rtdt_ui_browser = (function () {
                 'keyboard': function () { open_dialog('keyboardModal'); },
                 'contents': function () { open_dialog('keyboardModal'); },
                 'select-shape': function () { refresh_objects(); open_dialog('imageModal'); },
-                'bug': function () { window.open('https://github.com/inventordave2/RTDT/issues/new', '_blank'); },
+                'bug': function () { window.open('https://github.com/inventordave2/RtDt-v3.0/issues/new', '_blank'); },
                 'about': function () { open_dialog('aboutModal'); }
             };
             if (actions[action])
