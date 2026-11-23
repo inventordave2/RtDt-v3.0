@@ -280,6 +280,38 @@ async function main() {
             fs.readFileSync(path.join(folder,'out','still-from-pack.png')),
             'CLI and WebApp pack still PNGs must match byte-for-byte');
 
+        // Exercise the camera dialogue against the shared flightpath sampler.
+        await page.locator('#btnOpenCamera').click();
+        await page.locator('#cameraModal').waitFor({state:'visible'});
+        await page.fill('#cameraPathPoints','[[0,2,-8],[5,2,-4],[5,3,4]]');
+        await page.fill('#cameraPathFps','12');
+        await page.locator('#btnCreateCameraPath').click();
+        assert.match(await page.locator('#cameraPathStatus').innerText(),/Flightpath ready/);
+        await page.fill('#cameraPathTime','0');
+        await page.locator('#btnSampleCameraPath').click();
+        assert.equal(await page.locator('#camX').inputValue(),'0');
+        assert.equal(await page.locator('#camY').inputValue(),'2');
+        assert.equal(await page.locator('#camZ').inputValue(),'-8');
+        assert.match(await page.locator('#mainStatus').innerText(),/Camera updated/);
+        await page.locator('#btnOpenCamera').click();
+        await page.fill('#cameraPathPoints','invalid JSON');
+        await page.locator('#btnCreateCameraPath').click();
+        assert.match(await page.locator('#cameraPathStatus').innerText(),/Invalid flightpath/);
+        assert.equal(await page.locator('#btnSampleCameraPath').isDisabled(),true);
+        await page.locator('#cameraModal [data-close-dialog="cameraModal"]').last().click();
+
+        // Colour editing works independently of the camera and render controls.
+        await page.locator('details.section-light').evaluate(function (node) {
+
+            node.open=true;
+        });
+        await page.locator('#btnOpenLights').click();
+        await page.locator('#lightsModal').waitFor({state:'visible'});
+        await page.fill('#lightHex','#F0D0A0');
+        await page.locator('#lightHex').press('Tab');
+        await page.locator('#btnApplyLight').click();
+        assert.match(await page.locator('#mainStatus').innerText(),/Point-light colour updated/);
+
         assert.deepEqual(pageErrors,[],'Browser runtime errors: '+pageErrors.join('; '));
         await context.close();
         console.log('Chromium: scene + hosted/local RDT packs + AetherOre ZIP and cloud gate passed');
