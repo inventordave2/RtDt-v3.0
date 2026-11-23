@@ -78,6 +78,7 @@ try {
 	loadScript(path.join(repoRoot, 'rtdt_objfile-node.js'));
 	loadScript(path.join(repoRoot, 'rtdt_ap_math.js'));
 	loadScript(path.join(repoRoot, 'rtdt_aetherore.js'));
+    loadScript(path.join(repoRoot, 'rtdt_flightpath.js'));
     loadScript(path.join(repoRoot, 'rtdt_mandelbrot.js'));
 	
 	// Create scenes object from loaded functions
