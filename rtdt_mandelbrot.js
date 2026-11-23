@@ -114,60 +114,47 @@ var rtdt_mandelbrot = (function () {
             generator:'mandelbrot'};
     }
 
-    function flight_path(source) {
+    function flight_source(source) {
 
         var spec=source || {},vars=parameters(spec);
         var cx=parameter(spec.cx===undefined?-0.75:spec.cx,vars,'cx');
         var cy=parameter(spec.cy===undefined?0.1:spec.cy,vars,'cy');
         var steps=parameter(spec.steps===undefined?48:spec.steps,vars,'steps');
-        var cycles=parameter(spec.cycles===undefined?2:spec.cycles,vars,'cycles');
-        var fps=parameter(spec.fps===undefined?24:spec.fps,vars,'fps');
-        var scale=parameter(spec.scale===undefined?2:spec.scale,vars,'scale');
-        var entropy=parameter(spec.entropy===undefined?0.08:
-            spec.entropy,vars,'entropy');
         var radius=parameter(spec.escapeRadius===undefined?8:
             spec.escapeRadius,vars,'escapeRadius');
         if(!Number.isInteger(steps)||steps<2||steps>512||
-            !Number.isInteger(cycles)||cycles<1||cycles>16||
-            steps*cycles>4096||fps<=0||fps>240||
-            scale<=0||scale>100||entropy<0||entropy>1||
             radius<=0||radius>1000)
-            throw new Error('Invalid Mandelbrot cyclic flight workload');
+            throw new Error('Invalid Mandelbrot orbit settings');
         var points=orbit(cx,cy,steps,radius);
         if(points.length<3)
             throw new Error('Mandelbrot orbit escaped before a usable flight cycle');
-        var flight=[],cycleSize=points.length;
-        for(var cycleIndex=0;cycleIndex<cycles;cycleIndex++) {
+        // A Mandelbrot orbit only supplies sample geometry; periodic
+        // interpolation and expansion belong to the shared flightpath API.
+        return rtdt_flightpath.create(points.map(function (point) {
 
-            for(var stepIndex=0;stepIndex<cycleSize;stepIndex++) {
+            return [point[0],0,point[1]];
+        }),{
+            fps:parameter(spec.fps===undefined?24:spec.fps,vars,'fps'),
+            cycles:parameter(spec.cycles===undefined?2:spec.cycles,vars,'cycles'),
+            scale:parameter(spec.scale===undefined?2:spec.scale,vars,'scale'),
+            entropy:parameter(spec.entropy===undefined?0.08:spec.entropy,
+                vars,'entropy'),
+            expansion:spec.expansion
+        });
+    }
 
-                var sample=points[stepIndex];
-                var index=cycleIndex*cycleSize+stepIndex;
-                var expansion=scale*Math.exp(entropy*index/cycleSize);
-                flight.push({time:index/fps,
-                    value:[sample[0]*expansion,0,sample[1]*expansion]});
-            }
-        }
-        // The Mandelbrot orbit starts at z=0. Close the phase to z=0 on
-        // every cycle; expansion increases excursion without a position jump.
-        flight.push({time:cycles*cycleSize/fps,value:[0,0,0]});
-        return flight;
+    function flight_path(source) {
+
+        return rtdt_flightpath.to_keyframes(flight_source(source));
     }
 
     function flight_phy(source,id) {
 
-        var keyframes=flight_path(source);
-        var spec=source || {};
-        var fps=parameter(spec.fps===undefined?24:spec.fps,
-            parameters(spec),'fps');
-        return {version:1,timeline:{fps:fps,
-            duration:keyframes[keyframes.length-1].time},
-            objects:[{id:String(id===undefined?'0':id),
-                motion:{position:keyframes}}]};
+        return rtdt_flightpath.to_phy(flight_source(source),id);
     }
 
     return {iterate:iterate,orbit:orbit,texture:texture,
-        flight_path:flight_path,flight_phy:flight_phy};
+        flight_source:flight_source,flight_path:flight_path,flight_phy:flight_phy};
 }());
 if(typeof module!=='undefined'&&module.exports)
     module.exports=rtdt_mandelbrot;
