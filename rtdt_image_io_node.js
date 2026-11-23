@@ -116,18 +116,10 @@ function encodeIndexedBMP(pixels,width,height,palette) {
     return out;
 }
 function encodePPM(pixels,width,height) {
-    const data = rgba(pixels,width,height);
-    const lines = ['P3',width+' '+height,'255'];
-    for (let y=0; y<height; y++) {
-        const row = [];
-        for (let x=0; x<width; x++) {
-            const pos = 4 * (y*width+x);
-            row.push(data[pos]+' '+data[pos+1]+' '+data[pos+2]);
-        }
-        lines.push(row.join('  '));
-    }
-    return Buffer.from(lines.join('\n')+'\n','ascii');
+
+    return Buffer.from(require('./rtdt_ppm').encode(pixels,width,height));
 }
+
 function encode(pixels,width,height,format,options) {
     const opts=options || {};
     switch (String(format).toLowerCase()) {
