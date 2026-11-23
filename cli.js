@@ -65,6 +65,7 @@ try {
 	loadScript(path.join(repoRoot, 'rtdt_render_core.js'));
     global.rtdt_colour = colourIO;
     loadScript(path.join(repoRoot, 'rtdt_png.js'));
+    loadScript(path.join(repoRoot, 'rtdt_ppm.js'));
     loadScript(path.join(repoRoot, 'rtdt_animation_export.js'));
     loadScript(path.join(repoRoot, 'rtdt_animation_destination.js'));
     loadScript(path.join(repoRoot, 'rtdt_animation_batch.js'));
