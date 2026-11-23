@@ -11,6 +11,19 @@ var rtdt_scene_browser = (function () {
     }
     function point3(a) { return point(a[0],a[1],a[2]); }
     function vector3(a) { return vector(a[0],a[1],a[2]); }
+    function surface_image(spec) {
+
+        if (spec.type === 'mandelbrot') {
+
+            if (typeof rtdt_mandelbrot === 'undefined')
+                throw new Error('Mandelbrot surface generator was not loaded');
+            return rtdt_mandelbrot.texture(spec);
+        }
+        if (typeof rtdt_metal_surfaces !== 'undefined' &&
+            rtdt_metal_surfaces.supported_types.indexOf(spec.type) >= 0)
+            return rtdt_metal_surfaces.texture(spec);
+        throw new Error('Unsupported procedural surface generator: '+spec.type);
+    }
     function parse(source) {
         var model = rtdt_scene_format.parse(source);
         if (!model || Array.isArray(model) || model.version !== 1 ||
@@ -28,13 +41,26 @@ var rtdt_scene_browser = (function () {
                 throw new Error('Surface textures require a sphere, plane or UV-mapped mesh');
             if (item.surface) {
 
-                if (!item.surface || typeof item.surface !== 'object' ||
-                    Array.isArray(item.surface) || item.surface.type !== 'mandelbrot')
-                    throw new Error('Unsupported procedural surface generator');
+                if (typeof item.surface !== 'object' ||
+                    Array.isArray(item.surface) ||
+                    typeof item.surface.type !== 'string')
+                    throw new Error('Invalid procedural surface generator');
                 if (item.texture)
                     throw new Error('Choose either a texture file or procedural surface');
-                if (typeof rtdt_mandelbrot === 'undefined')
-                    throw new Error('Mandelbrot surface generator was not loaded');
+                if (item.surface.type === 'mandelbrot') {
+
+                    if (typeof rtdt_mandelbrot === 'undefined')
+                        throw new Error('Mandelbrot surface generator was not loaded');
+                } else if (typeof rtdt_metal_surfaces !== 'undefined' &&
+                    rtdt_metal_surfaces.supported_types.indexOf(
+                        item.surface.type) >= 0) {
+
+                    rtdt_metal_surfaces.validate(item.surface);
+                } else {
+
+                    throw new Error('Unsupported procedural surface generator: '+
+                        item.surface.type);
+                }
             }
             triple(item.position,'position',[0,0,0]);
             triple(item.scale,'scale',[1,1,1]);
@@ -119,7 +145,7 @@ var rtdt_scene_browser = (function () {
             if (texturePath || def.surface) {
 
                 var image=texturePath ? resolved.files['image:'+texturePath] :
-                    rtdt_mandelbrot.texture(def.surface);
+                    surface_image(def.surface);
                 if (!image) throw new Error('Missing texture '+texturePath);
                 if (def.type === 'mesh') {
                     // All triangle faces have independent per-corner OBJ vt coordinates.

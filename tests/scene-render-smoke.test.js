@@ -13,7 +13,7 @@ const modules = [
   'rtdt_p+e.js', 'rtdt_pattern.js', 'rtdt_colour.js',
   'rtdt_examples.js', 'raytracer-core.js', 'rtdt_objfile.js',
   'rtdt_render_core.js', 'rtdt_scene_assets.js', 'rtdt_scene_format.js',
-  'rtdt_scene_browser.js', 'rtdt_aetherore.js'
+  'rtdt_metal_surfaces.js', 'rtdt_scene_browser.js', 'rtdt_aetherore.js'
 ];
 const sandbox = {
   console: { log() {}, time() {}, timeEnd() {} },
@@ -52,7 +52,7 @@ assert.equal(run('rtdt_scene_assets.definitions(JSON.parse(sampleSceneJson)).len
 assert.equal(run('rtdt_scene_assets.definitions(JSON.parse(sampleSceneJson))[0].kind'), 'phy');
 
 // Hosted samples have valid scene JSON and dropdown entries.
-const galleryNames = ['orbit','rocket-to-rainbow-planet','prism-garden','cosmic-orbs','neon-city','reflection-studio','aurora-orrery','lee-perry-smith-head'];
+const galleryNames = ['orbit','rocket-to-rainbow-planet','prism-garden','cosmic-orbs','neon-city','reflection-studio','aurora-orrery','lee-perry-smith-head','mandelbrot-studio','metal-finishes'];
 for (const name of galleryNames) {
   const model = JSON.parse(fs.readFileSync(path.join(root, 'samples', name + '.scene'), 'utf8'));
   assert.equal(model.version, 1);

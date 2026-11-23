@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "name": "Metal Finishes",
+  "background": [0.025, 0.035, 0.07],
+  "camera": {
+    "from": [0, 1.8, -9.5],
+    "to": [0, 0, 0],
+    "up": [0, 1, 0],
+    "fov": 43
+  },
+  "light": {
+    "position": [-6, 8, -8],
+    "intensity": [1, 0.96, 0.9]
+  },
+  "objects": [
+    {
+      "type": "sphere",
+      "name": "Brushed steel",
+      "position": [-3, 0, 0],
+      "scale": [0.82, 0.82, 0.82],
+      "color": [1, 1, 1],
+      "material": {
+        "ambient": 0.08,
+        "diffuse": 0.78,
+        "specular": 0.92,
+        "shininess": 190,
+        "reflective": 0.06
+      },
+      "surface": {
+        "type": "brushed-steel",
+        "width": 512,
+        "height": 256
+      }
+    },
+    {
+      "type": "sphere",
+      "name": "Hammered titanium",
+      "position": [-1, 0, 0],
+      "scale": [0.82, 0.82, 0.82],
+      "color": [1, 1, 1],
+      "material": {
+        "ambient": 0.08,
+        "diffuse": 0.78,
+        "specular": 0.76,
+        "shininess": 80,
+        "reflective": 0.06
+      },
+      "surface": {
+        "type": "hammered-titanium",
+        "width": 512,
+        "height": 256
+      }
+    },
+    {
+      "type": "sphere",
+      "name": "Copper patina",
+      "position": [1, 0, 0],
+      "scale": [0.82, 0.82, 0.82],
+      "color": [1, 1, 1],
+      "material": {
+        "ambient": 0.08,
+        "diffuse": 0.78,
+        "specular": 0.84,
+        "shininess": 125,
+        "reflective": 0.06
+      },
+      "surface": {
+        "type": "copper-patina",
+        "width": 512,
+        "height": 256
+      }
+    },
+    {
+      "type": "sphere",
+      "name": "Anodized iridescence",
+      "position": [3, 0, 0],
+      "scale": [0.82, 0.82, 0.82],
+      "color": [1, 1, 1],
+      "material": {
+        "ambient": 0.08,
+        "diffuse": 0.78,
+        "specular": 0.95,
+        "shininess": 205,
+        "reflective": 0.06
+      },
+      "surface": {
+        "type": "anodized-iridescence",
+        "width": 512,
+        "height": 256
+      }
+    },
+    {
+      "type": "plane",
+      "name": "Dark studio floor",
+      "position": [0, -0.96, 0],
+      "color": [0.07, 0.09, 0.13],
+      "material": {
+        "ambient": 0.18,
+        "diffuse": 0.58,
+        "specular": 0.24,
+        "shininess": 60
+      }
+    }
+  ]
+}
