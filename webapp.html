@@ -321,179 +321,6 @@
 			}
 		}
 
-		/* RtDt rainbow-spectrum theme: inline CSS, no external assets. */
-		body {
-
-			background-color: #e9eef6;
-			color: #26334a;
-		}
-
-		header {
-
-			background-color: #243248;
-			border-bottom: 0;
-			text-shadow: 0 1px 1px #101927;
-		}
-
-		.spectrum-bar {
-
-			height: 7px;
-			overflow: hidden;
-			background-color: #597fb4;
-		}
-
-		.spectrum-bar span {
-
-			display: block;
-			float: left;
-			width: 16.666%;
-			height: 7px;
-		}
-
-		.spectrum-red { background-color: #e85c69; }
-		.spectrum-orange { background-color: #edaa52; }
-		.spectrum-yellow { background-color: #ead44f; }
-		.spectrum-green { background-color: #4db58b; }
-		.spectrum-blue { background-color: #4d96d2; }
-		.spectrum-violet { background-color: #9072ce; }
-
-		.sidebar, .main {
-
-			background-color: #f8faff;
-			border-color: #bfcee0;
-			border-radius: 6px;
-			box-shadow: 0 2px 9px #b7c5d6;
-		}
-
-		.main {
-
-			background-color: #f4f7fc;
-		}
-
-		canvas {
-
-			border: 3px solid #26364e;
-			box-shadow: 0 2px 7px #bac8d8;
-		}
-
-		.section {
-
-			background-color: #ffffff;
-			border: 1px solid #d5deeb;
-			border-left: 5px solid #899bb3;
-			border-radius: 5px;
-			padding: 12px;
-		}
-
-		.section h3 {
-
-			color: #26334a;
-			border-bottom-color: #a4b3c7;
-		}
-
-		.section-scene { border-left-color: #e85c69; }
-		.section-camera { border-left-color: #edaa52; }
-		.section-render { border-left-color: #4db58b; }
-		.section-files { border-left-color: #4d96d2; }
-		.section-help { border-left-color: #9072ce; }
-
-		.section-scene h3 { border-bottom-color: #e85c69; }
-		.section-camera h3 { border-bottom-color: #edaa52; }
-		.section-render h3 { border-bottom-color: #4db58b; }
-		.section-files h3 { border-bottom-color: #4d96d2; }
-		.section-help h3 { border-bottom-color: #9072ce; }
-
-		button {
-
-			background-color: #5977b4;
-			border: 1px solid #334e81;
-			border-top-color: #9db3dc;
-			border-left-color: #9db3dc;
-			border-radius: 4px;
-			box-shadow: inset 0 1px 0 #c0ceeb, 0 2px 2px #a8b7ca;
-			text-shadow: 0 1px 0 #354d79;
-		}
-
-		button:hover {
-
-			background-color: #4b69a4;
-		}
-
-		button:active {
-
-			border-top-color: #334e81;
-			border-left-color: #334e81;
-			box-shadow: inset 0 2px 3px #344c77;
-		}
-
-		button:disabled {
-
-			background-color: #a5afbc;
-			border-color: #929eaf;
-			box-shadow: none;
-			text-shadow: none;
-		}
-
-		.section-scene button { background-color: #c54e64; border-color: #933949; }
-		.section-camera button { background-color: #ba792e; border-color: #87531b; }
-		.section-render button { background-color: #27875e; border-color: #1e6849; }
-		.section-files button { background-color: #347bb8; border-color: #245b88; }
-		.section-help button { background-color: #795caf; border-color: #563f86; }
-
-		.section button:hover { opacity: 0.94; }
-
-		.btn-secondary {
-
-			color: #ffffff;
-		}
-
-		.btn-danger, #btnAbort {
-
-			background-color: #c13e48;
-			border-color: #8e2632;
-		}
-
-		.modal-content {
-
-			border-top: 5px solid #9072ce;
-			box-shadow: 0 6px 20px #74849b;
-		}
-
-		.status.info {
-
-			background-color: #e9f0ff;
-			border-left-color: #4d96d2;
-		}
-
-		.coordinate-row input {
-
-			display: inline-block;
-			width: 30%;
-			margin-right: 2%;
-		}
-
-		.preset-row button {
-
-			display: inline-block;
-			width: 17%;
-			padding: 7px 2px;
-			font-size: 11px;
-			margin: 2px 1%;
-		}
-
-		.import-note {
-
-			margin-top: 12px;
-			color: #48546c;
-			font-size: 12px;
-		}
-
-		.modal-content {
-
-			width: 95%;
-			max-width: 540px;
-		}
-
         /* Traditional CSS dropdown menubar. No external JavaScript or framework. */
         .rtdt-menubar {
 
@@ -875,6 +702,103 @@
         .rtdt-light-presets button { width:auto; min-width:60px; min-height:32px; padding:6px 10px; margin:0; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; border-radius:6px; box-shadow:none; text-shadow:none; font-size:12px; }
         .rtdt-light-presets button:hover { background:#eaf2ff; color:#1d4ed8; opacity:1; transform:none; }
         @media(max-width:440px) { .rtdt-light-colour-row { grid-template-columns:60px minmax(0,1fr); } .rtdt-light-preview { display:none; } }
+
+        /* Shared workbench design, derived from the About RtDt dialog. */
+        :root {
+            --rtdt-navy:#11243e; --rtdt-blue:#294f75; --rtdt-cyan:#68e0e8;
+            --rtdt-page:#eaf0f7; --rtdt-panel:#f9fbff; --rtdt-line:#d6e2f0;
+            --rtdt-text:#24374d; --rtdt-muted:#60758c; --rtdt-focus:#1688ad;
+        }
+        body { font-family:"Segoe UI",Arial,sans-serif; color:var(--rtdt-text); background:var(--rtdt-page); }
+        header { background:linear-gradient(115deg,var(--rtdt-navy),var(--rtdt-blue)); }
+        .spectrum-bar { height:3px; background:var(--rtdt-cyan); }
+        .spectrum-bar span { display:none; }
+        .container { max-width:1680px; }
+        .sidebar,.main { background:var(--rtdt-panel); border:1px solid var(--rtdt-line);
+            border-radius:12px; box-shadow:0 8px 25px rgba(21,46,73,.07); }
+        .sidebar .section { background:#fff; border:1px solid var(--rtdt-line); border-radius:10px;
+            box-shadow:none; padding:15px; }
+        .sidebar .section h3,.rtdt-preview-title h2 { border:0; color:var(--rtdt-navy);
+            font-weight:750; letter-spacing:-.025em; }
+        .sidebar .section h3 { margin-bottom:12px; }
+        .rtdt-collapsible > summary { background:#f2f6fb; color:var(--rtdt-navy);
+            border-radius:8px; }
+        .rtdt-menubar { background:#152b46; border-bottom:1px solid #365773; }
+        .rtdt-menubar .rtdt-menu-content { background:var(--rtdt-panel); border-radius:9px;
+            border:1px solid var(--rtdt-line); box-shadow:0 12px 32px rgba(15,37,63,.18); }
+        .rtdt-menubar .rtdt-menu-toggle:hover,.rtdt-menubar .rtdt-menu.open .rtdt-menu-toggle {
+            background:#355978; }
+        label,.rtdt-field-title { color:#38516b; font-weight:650; }
+        .rtdt-caption,.rtdt-preview-meta,.rtdt-render-hint { color:var(--rtdt-muted); }
+        input[type="text"],input[type="number"],input[type="file"],select,textarea {
+            border:1px solid #bdcde0; border-radius:7px; background:#fff; color:var(--rtdt-text);
+            font:inherit; font-size:13px; }
+        textarea { display:block; width:100%; min-height:88px; resize:vertical; padding:10px; }
+        input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,
+        summary:focus-visible,a:focus-visible { outline:2px solid var(--rtdt-focus); outline-offset:2px; }
+        button,.section button,.rtdt-render-main button {
+            background:#294f75; color:#fff; border:1px solid #294f75; border-radius:7px;
+            box-shadow:none; text-shadow:none; font-weight:650; transition:background .14s,border-color .14s; }
+        button:hover,.section button:hover,.rtdt-render-main button:hover {
+            background:#1b3959; border-color:#1b3959; opacity:1; }
+        button:disabled { background:#e5ebf3; color:#718096; border-color:#d2dce7;
+            box-shadow:none; text-shadow:none; cursor:not-allowed; }
+        .btn-secondary,.section .btn-secondary { background:#f3f7fc; color:#294f75; border-color:#bfcfe1; }
+        .btn-secondary:hover,.section .btn-secondary:hover { background:#e5eef9; color:#17395a; border-color:#95b4ce; }
+        .btn-danger,#btnAbort { background:#a72f45; border-color:#a72f45; }
+        .btn-danger:hover,#btnAbort:hover { background:#86263a; border-color:#86263a; }
+        #btnLoadScene,#btnRender { background:#166c84; border-color:#166c84; }
+        #btnLoadScene:hover,#btnRender:hover { background:#10556a; border-color:#10556a; }
+        .rtdt-asset-grid button { color:#284664; background:#f3f7fc; border-color:var(--rtdt-line); }
+        .rtdt-asset-grid button:hover { color:#143451; background:#e5eef9; }
+        .rtdt-render-toolbar,.rtdt-dependencies,.rtdt-bvh-status { background:#fff;
+            border:1px solid var(--rtdt-line); border-radius:9px; }
+        .rtdt-preview { background:#14283e; border:1px solid #294762; border-radius:10px; }
+        .rtdt-preview canvas { border:1px solid #506986; box-shadow:none; }
+        .rtdt-workflow span { border-color:var(--rtdt-line); background:#fff; color:#51667d; }
+        .rtdt-workflow .is-active { background:#e1f5f6; border-color:#94d8de; color:#176779; }
+        .status { border-radius:7px; background:#edf4fc; border-left:3px solid #3b7ca8; }
+        .status.info { background:#edf4fc; color:#214c70; }
+        .status.success { background:#eaf6ee; color:#24633f; }
+        .status.error { background:#fceff0; color:#8a2c3a; }
+        .modal { background:rgba(8,24,43,.58); padding:16px; }
+        .modal-content,.rtdt-help-dialog { border:1px solid #b9cddd; border-top:0;
+            border-radius:12px; background:var(--rtdt-panel); box-shadow:0 22px 60px rgba(7,24,45,.26); }
+        .modal-header,.rtdt-dialog-header { background:linear-gradient(115deg,var(--rtdt-navy),var(--rtdt-blue));
+            color:#f5faff; border:0; padding:17px 21px; }
+        .modal-header h2,.rtdt-dialog-header h2 { color:#fff; font-size:19px; }
+        .rtdt-dialog-header p { margin-top:4px; font-size:12px; color:#cbddeb; }
+        .rtdt-dialog-header .rtdt-dialog-close,.modal-header .modal-close {
+            color:#e8f2ff; background:rgba(255,255,255,.08); border:1px solid rgba(215,231,248,.28);
+            border-radius:7px; box-shadow:none; width:30px; min-height:30px; }
+        .rtdt-dialog-header .rtdt-dialog-close:hover,.modal-header .modal-close:hover {
+            color:white; background:rgba(255,255,255,.18); }
+        .rtdt-dialog-footer { border-top:1px solid var(--rtdt-line); }
+        .rtdt-dialog-footer .rtdt-btn-primary { background:#294f75; border-color:#294f75; }
+        .rtdt-dialog-footer .rtdt-btn-outline { background:#fff; border:1px solid #b9ccdf; color:#294f75; }
+        .rtdt-dialog-footer .rtdt-btn-outline:hover { background:#e9f0f9; color:#17395a; }
+        .rtdt-camera-dialog { width:min(94vw,610px); max-width:610px; padding:0; overflow-y:auto; }
+        .rtdt-camera-dialog .rtdt-dialog-body { padding:18px 21px; }
+        .rtdt-dialog-section + .rtdt-dialog-section { border-top:1px solid var(--rtdt-line);
+            margin-top:20px; padding-top:19px; }
+        .rtdt-dialog-section h3 { color:var(--rtdt-navy); font-size:15px; margin-bottom:8px; }
+        .rtdt-coordinate-fieldset { border:0; padding:0; margin:12px 0; min-width:0; }
+        .rtdt-coordinate-fieldset legend { color:#38516b; font-weight:650; font-size:13px;
+            margin-bottom:7px; }
+        .rtdt-three-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+        .rtdt-three-fields label { font-size:12px; }
+        .rtdt-three-fields input { width:100%; margin-top:5px; }
+        .rtdt-camera-dialog #btnUpdateCamera { margin-top:4px; }
+        .rtdt-camera-dialog .rtdt-dialog-note { margin-top:12px; line-height:1.5; }
+        .rtdt-light-dialog .rtdt-dialog-body { padding:19px 21px; }
+        .rtdt-field-title { font-size:12px; margin:12px 0 6px; }
+        .rtdt-light-presets button { background:#f3f7fc; color:#294f75; border-color:#bfcfe1; }
+        .rtdt-light-presets button:hover { background:#e5eef9; color:#17395a; }
+        @media(max-width:540px) {
+            .rtdt-three-fields { gap:6px; }
+            .rtdt-camera-dialog .rtdt-dialog-body,.rtdt-light-dialog .rtdt-dialog-body { padding:13px; }
+            .rtdt-dialog-header,.modal-header { padding:14px; }
+        }
 	</style>
 </head>
 <body>
@@ -914,11 +838,10 @@
             <button type="button" data-menu-action="select-shape">Select Element</button>
             <button type="button" data-menu-action="bug">Report a Bug</button>
             <button type="button" data-menu-action="about">About RtDt</button>
-            <a href="https://pragprog.com/titles/jbtracer/the-ray-tracer-challenge/" target="_blank" rel="noopener noreferrer">Jamis Buck's ray tracer book</a>
         </div>
     </div>
     <div class="rtdt-menubar-links">
-        <a href="https://github.com/inventordave2/RTDT" target="_blank" rel="noopener noreferrer">Source</a>
+        <a href="https://github.com/inventordave2/RtDt-v3.0" target="_blank" rel="noopener noreferrer">Source</a>
         <a href="mailto:digital.artist@hotmail.co.uk">Email</a>
         <a href="https://open.spotify.com/album/1ost8iDohzxcLEQcT7OpdG" target="_blank" rel="noopener noreferrer">Music</a>
         <a href="https://www.youtube.com/@Computerphile" target="_blank" rel="noopener noreferrer">YouTube</a>
@@ -1056,22 +979,11 @@
 			</div>
 			
 			<!-- Camera Controls -->
-			<details class="section section-camera rtdt-collapsible"><summary>2 · Camera</summary>
-				
-				<div class="control-group">
-					<label for="camX">Position X:</label>
-					<input type="number" id="camX" value="-6" step="0.1">
-				</div>
-				<div class="control-group">
-					<label for="camY">Position Y:</label>
-					<input type="number" id="camY" value="1.5" step="0.1">
-				</div>
-				<div class="control-group">
-					<label for="camZ">Position Z:</label>
-					<input type="number" id="camZ" value="6" step="0.1">
-				</div>
-				<button id="btnUpdateCamera">Apply camera</button><button id="btnOpenCamera">Advanced camera…</button>
-			</details>
+            <div class="section section-camera">
+                <h3>2 · Camera</h3>
+                <p class="rtdt-caption">Set your viewpoint or sample a flightpath.</p>
+                <button id="btnOpenCamera" type="button">Camera &amp; flightpath settings…</button>
+            </div>
 			
 			<details class="section section-light rtdt-collapsible"><summary>3 · Lighting</summary><p class="rtdt-caption">Configure the current scene light.</p><button id="btnOpenLights" type="button">Light colour settings…</button></details>
 			<details class="section section-files rtdt-collapsible"><summary>4 · Export</summary><label for="exportFormat">Image format</label><select id="exportFormat"><option value="png">PNG (default)</option><option value="jpeg">JPEG</option><option value="bmp">BMP — RGB 24-bit (true colour)</option><option value="c64">BMP — C64 indexed</option><option value="ansi256">BMP — ANSI256 indexed</option><option value="gray8">BMP — grayscale</option><option value="ppm">PPM (P3 — legacy)</option></select><button id="btnDownload" type="button">Export rendered image</button><p class="rtdt-caption">PNG, JPEG and 24-bit RGB BMP are the primary formats. Indexed BMP and PPM remain available.</p></details><input type="file" id="objFile" accept=".obj" style="display:none" aria-label="Legacy local OBJ file"><button id="btnShowKeyboard" type="button" style="display:none">Keyboard shortcuts</button>
@@ -1164,22 +1076,60 @@
   </div>
 </div>
 <!-- Legacy camera, light and file controls migrated as accessible modal dialogs -->
-<div id="cameraModal" class="modal"><div class="modal-content" role="dialog" aria-label="Advanced camera">
-	<div class="modal-header"><button class="modal-close" data-close-dialog="cameraModal" aria-label="Close">&times;</button>Camera</div>
-	<label for="cameraPreset">Camera preset:</label><select id="cameraPreset"><option value="0">Preset 1</option><option value="1">Preset 2</option><option value="2">Preset 3</option></select>
-	<label>Look-at coordinates:</label><div class="coordinate-row">
-	<input type="number" id="lookX" value="0" step=".1" aria-label="Look-at X">
-	<input type="number" id="lookY" value="0" step=".1" aria-label="Look-at Y">
-	<input type="number" id="lookZ" value="0" step=".1" aria-label="Look-at Z"></div>
-	<label for="cameraFov">Field of view (degrees):</label><input type="number" id="cameraFov" value="45" min="1" max="179">
-	<button data-close-dialog="cameraModal">Close</button>
-</div></div>
+<div id="cameraModal" class="modal" role="presentation">
+  <div class="modal-content rtdt-camera-dialog" role="dialog" aria-modal="true" aria-labelledby="cameraSettingsTitle">
+    <div class="rtdt-dialog-header rtdt-camera-dialog-header">
+      <div><h2 id="cameraSettingsTitle">Camera &amp; flightpath<span class="rtdt-about-dot">.</span></h2><p>Compose a view or position the camera on a sampled curve.</p></div>
+      <button type="button" class="rtdt-dialog-close" data-close-dialog="cameraModal" aria-label="Close camera settings">×</button>
+    </div>
+    <div class="rtdt-dialog-body">
+      <div class="rtdt-dialog-section">
+        <h3>Viewpoint</h3>
+        <p class="rtdt-caption">Coordinates are in scene space. Position and target must differ.</p>
+        <div class="control-group"><label for="cameraPreset">Saved camera preset</label>
+          <select id="cameraPreset"><option value="">Choose a preset…</option><option value="0">Preset 1</option><option value="1">Preset 2</option><option value="2">Preset 3</option></select>
+          <p class="rtdt-caption">Selecting a preset applies it immediately. Manual values below apply separately.</p>
+        </div>
+        <fieldset class="rtdt-coordinate-fieldset"><legend>Camera position</legend><div class="rtdt-three-fields">
+          <label for="camX">X<input id="camX" type="number" value="-6" step="0.1"></label>
+          <label for="camY">Y<input id="camY" type="number" value="1.5" step="0.1"></label>
+          <label for="camZ">Z<input id="camZ" type="number" value="6" step="0.1"></label>
+        </div></fieldset>
+        <fieldset class="rtdt-coordinate-fieldset"><legend>Look-at target</legend><div class="rtdt-three-fields">
+          <label for="lookX">X<input id="lookX" type="number" value="0" step="0.1"></label>
+          <label for="lookY">Y<input id="lookY" type="number" value="0" step="0.1"></label>
+          <label for="lookZ">Z<input id="lookZ" type="number" value="0" step="0.1"></label>
+        </div></fieldset>
+        <div class="control-group"><label for="cameraFov">Field of view (degrees)</label><input id="cameraFov" type="number" value="45" min="1" max="179" step="1"></div>
+        <button type="button" id="btnUpdateCamera" class="rtdt-btn rtdt-btn-primary">Apply camera viewpoint</button>
+      </div>
+      <div class="rtdt-dialog-section">
+        <h3>Flightpath sampler</h3>
+        <p class="rtdt-caption">Enter a JSON array of 3D camera positions. The shared flightpath API interpolates a <strong>looping</strong> curve, sampled at the chosen time. The look-at target and field of view above stay fixed.</p>
+        <label for="cameraPathPoints">Path control points [X, Y, Z]</label>
+        <textarea id="cameraPathPoints" rows="4" spellcheck="false">[[0,2,-8],[5,2,-4],[5,3,4],[0,2,8],[-5,2,4],[-5,3,-4]]</textarea>
+        <div class="rtdt-field-row">
+          <div class="control-group"><label for="cameraPathFps">Samples per second</label><input id="cameraPathFps" type="number" min="1" max="240" step="1" value="24"></div>
+          <div class="control-group"><label for="cameraPathTime">Sample time (seconds)</label><input id="cameraPathTime" type="number" min="0" step="0.041666667" value="0"></div>
+        </div>
+        <div class="rtdt-actions">
+          <button id="btnCreateCameraPath" type="button" class="btn-secondary">Validate flightpath</button>
+          <button id="btnSampleCameraPath" type="button" disabled>Apply sampled pose</button>
+        </div>
+        <div id="cameraPathStatus" class="rtdt-dialog-note" role="status" aria-live="polite">Create a path to enable sampling. Continuous camera playback and camera orientation tracks are not available yet.</div>
+      </div>
+    </div>
+    <div class="rtdt-dialog-footer">
+      <button type="button" class="rtdt-btn rtdt-btn-outline" data-close-dialog="cameraModal">Close</button>
+    </div>
+  </div>
+</div>
 <div id="lightsModal" class="modal" role="presentation">
  <div class="modal-content rtdt-help-dialog rtdt-light-dialog" role="dialog" aria-modal="true" aria-labelledby="lightSettingsTitle">
-  <div class="rtdt-dialog-header"><h2 id="lightSettingsTitle">Point light · RGB colour</h2>
+  <div class="rtdt-dialog-header rtdt-camera-dialog-header"><div><h2 id="lightSettingsTitle">Lighting<span class="rtdt-about-dot">.</span></h2><p>Point-light colour · 24-bit RGB</p></div>
    <button type="button" class="rtdt-dialog-close" data-close-dialog="lightsModal" aria-label="Close light settings">×</button></div>
   <div class="rtdt-dialog-body">
-   <p>Set this scene's point-light colour using 24-bit RGB. Each channel ranges from 0 to 255; the current engine uses one point light.</p>
+   <p>Choose the light colour using the picker, hex value or RGB channels. The scene currently supports one point light; changes appear on the next render.</p>
    <div class="rtdt-light-colour-row">
     <input type="color" id="lightColour" value="#ffffff" aria-label="Choose point-light colour">
     <div><label for="lightHex">Hexadecimal RGB</label><input type="text" id="lightHex" value="#FFFFFF" maxlength="7" spellcheck="false" inputmode="text" placeholder="#RRGGBB"></div>
@@ -1190,7 +1140,7 @@
     <div><label for="lightGreenChannel">Green</label><input id="lightGreenChannel" type="number" min="0" max="255" step="1" value="255"></div>
     <div><label for="lightBlueChannel">Blue</label><input id="lightBlueChannel" type="number" min="0" max="255" step="1" value="255"></div>
    </div>
-   <label>Quick presets</label>
+   <p class="rtdt-field-title">Quick colour presets</p>
    <div class="rtdt-light-presets">
     <button id="lightWhite" type="button">White</button>
     <button id="lightWarm" type="button">Warm</button>
