@@ -13,6 +13,7 @@ The root [README](../README.md) remains the GitHub project front page.
 - [Scene files](Scene-files.md)
 - [Scene files quickstart](Scene-files-quickstart.md)
 - [Create a scene pack](Scene-pack-creation.md)
+- [RtDt .rdt pack manifest format](RDT-pack-format.md)
 - [Beetle Psychedelia sample](../samples/vw-beetle-psychedelia.scene)
 
 ## Development
