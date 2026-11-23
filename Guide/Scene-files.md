@@ -59,7 +59,8 @@ Supported `surface.type` values are `brushed-steel`, `hammered-titanium`,
 These generators create colour/albedo patterns, not normal or roughness maps.
 RtDt's current point-light Phong shading supplies the highlights, so these are
 metal-look finishes rather than a physically based metallic BRDF. See the
-[Metal Finishes sample](../samples/metal-finishes.scene).
+[Metal Finishes sample](../samples/metal-finishes.scene) and its
+[rendered preview](images/metal-finishes-preview.png).
 
 ## Meshes, textures and animation
 

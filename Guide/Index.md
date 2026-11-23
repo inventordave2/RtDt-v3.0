@@ -2,6 +2,8 @@
 
 These documents describe the supported code on the repository's current `main` branch. The [README](../README.md) is the project front page.
 
+![RtDt render of the four procedural metal finishes](images/metal-finishes-preview.png)
+
 ## Getting started
 
 - [CLI usage and options](CLI.md)
