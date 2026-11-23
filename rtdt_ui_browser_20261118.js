@@ -24,6 +24,7 @@ var rtdt_ui_browser = (function () {
     var packFpsOverride = null;
     var packZipFilename = null;
     var packStillFilename = null;
+    var cameraPath = null;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -984,6 +985,71 @@ var rtdt_ui_browser = (function () {
         reader.readAsText(file);
     }
 
+    function camera_message(message,mode) {
+
+        var node=element('cameraPathStatus');
+        if(node) {
+
+            node.textContent=message;
+            node.className='rtdt-dialog-note '+(mode||'info');
+        }
+    }
+
+    function camera_number(id) {
+
+        var field=element(id),raw=String(field.value).trim(),value=Number(raw);
+        if(!raw||!Number.isFinite(value))
+            throw new Error('Enter a finite numeric value for '+id+'.');
+        return value;
+    }
+
+    function create_camera_path() {
+
+        try {
+
+            if(typeof rtdt_flightpath==='undefined')
+                throw new Error('The shared flightpath API was not loaded.');
+            var points=JSON.parse(element('cameraPathPoints').value);
+            var fps=camera_number('cameraPathFps');
+            cameraPath=rtdt_flightpath.create(points,{
+                fps:fps,cycles:1,scale:1,entropy:0,expansion:'1'
+            });
+            var timeField=element('cameraPathTime');
+            timeField.max=String(cameraPath.duration);
+            timeField.step=String(1/fps);
+            element('btnSampleCameraPath').disabled=false;
+            camera_message('Flightpath ready: '+cameraPath.points.length+
+                ' positions, '+cameraPath.duration.toFixed(2)+
+                ' seconds, looping. Choose a time to apply its camera position.','success');
+        } catch(error) {
+
+            cameraPath=null;
+            element('btnSampleCameraPath').disabled=true;
+            camera_message('Invalid flightpath: '+error.message,'error');
+        }
+    }
+
+    function sample_camera_path() {
+
+        try {
+
+            if(!cameraPath)
+                throw new Error('Validate a flightpath first.');
+            var time=camera_number('cameraPathTime');
+            var position=rtdt_flightpath.sample_at(cameraPath,time);
+            ['camX','camY','camZ'].forEach(function(id,axis) {
+
+                element(id).value=String(position[axis]);
+            });
+            if(!scene_loaded)
+                throw new Error('Flightpath sampled. Load a scene before applying the camera.');
+            change_camera();
+        } catch(error) {
+
+            camera_message(error.message,'error');
+        }
+    }
+
     function change_camera() {
 
         if (running) {
@@ -999,14 +1065,14 @@ var rtdt_ui_browser = (function () {
         try {
 
             var from = point(
-                Number(element('camX').value),
-                Number(element('camY').value),
-                Number(element('camZ').value));
+                camera_number('camX'),
+                camera_number('camY'),
+                camera_number('camZ'));
             var to = point(
-                Number(element('lookX').value),
-                Number(element('lookY').value),
-                Number(element('lookZ').value));
-            var fov = Number(element('cameraFov').value);
+                camera_number('lookX'),
+                camera_number('lookY'),
+                camera_number('lookZ'));
+            var fov = camera_number('cameraFov');
             if (!isFinite(fov) || fov <= 0 || fov >= 180 ||
                 (from.x === to.x && from.y === to.y && from.z === to.z))
                 throw new Error('Invalid camera position or field of view');
@@ -1018,21 +1084,37 @@ var rtdt_ui_browser = (function () {
 
             RtDtState.scene.c = new camera(WIDTH, HEIGHT, fov * Math.PI / 180);
             RtDtState.scene.c.setCTransform(view_transform(from, to, up));
-            status('mainStatus', 'Camera updated.', 'success');
+            pixels=null;
+            status('mainStatus', 'Camera updated. Render to see the new view.', 'success');
             close_dialog('cameraModal');
         } catch (error) {
 
             status('mainStatus', error.message, 'error');
+            camera_message(error.message,'error');
         }
     }
 
     function camera_preset() {
 
-        var index = Number(element('cameraPreset').value);
-        if (!scene_loaded || !RtDtState.scene.presets.camera[index])
+        var selected=element('cameraPreset').value;
+        if(selected==='') return;
+        var index=Number(selected);
+        if(!scene_loaded || !RtDtState.scene.presets ||
+            !RtDtState.scene.presets.camera ||
+            !RtDtState.scene.presets.camera[index]) {
+
+            camera_message('Load a scene with this camera preset first.','error');
             return;
+        }
+        if(running||playback_active) {
+
+            camera_message('Stop rendering or animation before changing the camera.','error');
+            return;
+        }
         RtDtState.scene.c.setCTransform(RtDtState.scene.presets.camera[index]);
-        status('mainStatus', 'Camera preset applied.', 'success');
+        pixels=null;
+        camera_message('Camera preset applied. Render to see the new view.','success');
+        status('mainStatus','Camera preset applied. Render to see the new view.','success');
     }
 
     function channel_byte(id) {
@@ -1552,6 +1634,20 @@ var rtdt_ui_browser = (function () {
         bind('btnAbort', 'click', cancel_render);
         bind('btnUpdateCamera', 'click', change_camera);
         bind('btnOpenCamera', 'click', function () { open_dialog('cameraModal'); });
+        bind('btnCreateCameraPath','click',create_camera_path);
+        bind('btnSampleCameraPath','click',sample_camera_path);
+        bind('cameraPathPoints','input',function() {
+
+            cameraPath=null;
+            element('btnSampleCameraPath').disabled=true;
+            camera_message('Path changed. Validate it before sampling.','info');
+        });
+        bind('cameraPathFps','change',function() {
+
+            cameraPath=null;
+            element('btnSampleCameraPath').disabled=true;
+            camera_message('Sample rate changed. Revalidate the path.','info');
+        });
         bind('btnOpenLights', 'click', open_light_settings);
         bind('btnOpenImage', 'click', function () { refresh_objects(); open_dialog('imageModal'); });
         bind('btnShowKeyboard', 'click', function () { open_dialog('keyboardModal'); });
