@@ -23,8 +23,19 @@ var rtdt_scene_browser = (function () {
                 throw new Error('Unsupported browser scene primitive');
             if (item.type === 'mesh' && typeof item.mesh !== 'string')
                 throw new Error('Mesh scene object requires a mesh asset path');
-            if (item.texture && ['sphere','plane','mesh'].indexOf(item.type) < 0)
-                throw new Error('Texture mapping is supported on spheres, planes and UV-mapped meshes');
+            if ((item.texture || item.surface) &&
+                ['sphere','plane','mesh'].indexOf(item.type) < 0)
+                throw new Error('Surface textures require a sphere, plane or UV-mapped mesh');
+            if (item.surface) {
+
+                if (!item.surface || typeof item.surface !== 'object' ||
+                    Array.isArray(item.surface) || item.surface.type !== 'mandelbrot')
+                    throw new Error('Unsupported procedural surface generator');
+                if (item.texture)
+                    throw new Error('Choose either a texture file or procedural surface');
+                if (typeof rtdt_mandelbrot === 'undefined')
+                    throw new Error('Mandelbrot surface generator was not loaded');
+            }
             triple(item.position,'position',[0,0,0]);
             triple(item.scale,'scale',[1,1,1]);
             triple(item.color,'color',[0.5,0.5,0.5]);
@@ -103,8 +114,12 @@ var rtdt_scene_browser = (function () {
                 if (entry.kind === 'image' && (entry.target === index || entry.target === def.name))
                     texturePath=entry.path;
             });
-            if (texturePath) {
-                var image=resolved.files['image:'+texturePath];
+            if (texturePath && def.surface)
+                throw new Error('Choose either a resolved texture or procedural surface');
+            if (texturePath || def.surface) {
+
+                var image=texturePath ? resolved.files['image:'+texturePath] :
+                    rtdt_mandelbrot.texture(def.surface);
                 if (!image) throw new Error('Missing texture '+texturePath);
                 if (def.type === 'mesh') {
                     // All triangle faces have independent per-corner OBJ vt coordinates.
