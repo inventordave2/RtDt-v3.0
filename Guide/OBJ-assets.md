@@ -1,5 +1,7 @@
-# OBJ assets
+# OBJ mesh resources
 
-This folder stores standalone meshes distributed with RTDT, including the cat, teapot, teddy and pyramid. It is not a private user account collection.
+Standalone meshes are stored in [`obj/`](../obj), including pyramid, teapot, teddy and cat geometry. Scene-private OBJ assets typically reside in a matching folder under [`samples/`](../samples).
 
-Packaged `samples/*.scene` examples place private dependencies under a corresponding scene-name folder, or reusable pack dependencies under `samples/shared/`. Scene asset paths must be relative to the scene file (not `../obj/`). See [scene-pack creation](Scene-pack-creation.md).
+The declarative scene loader expects scene-relative paths, such as `rocket-to-rainbow-planet/rocket_hull.obj` from `samples/rocket-to-rainbow-planet.scene`. Meshes support triangulation, `vt` UV coordinates and `vn` smooth normals. High-poly scenes can benefit from BVH subdivision. Normal/bump maps are not implemented.
+
+See [Scene files](Scene-files.md) and [pack creation](Scene-pack-creation.md).

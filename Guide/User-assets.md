@@ -1,7 +1,9 @@
-# User assets
+# User asset storage
 
-Suggested public repository convention: `user/~username/obj/`, `user/~username/img/`, `user/~username/shared/`, and `user/~username/my-scene.scene` with its private files in `user/~username/my-scene/`. Replace `~username` with the name chosen by the owner.
+A public repository cannot provide private account storage. If users commit assets to GitHub, those files and their content are public.
 
-**Files committed to this public GitHub repository are public, not private user storage.** For local-only files, choose **My computer** in the WebApp and explicitly select the `.scene` and required dependencies.
+For uncommitted local projects, use the WebApp's **My computer** scene selection with associated files or select a complete **local pack folder** containing one root-level `.rdt` manifest. The browser cannot silently traverse arbitrary local directories.
 
-Packaged built-in example scenes belong under [samples/](../samples), not here.
+When organising assets for publication, keep each `.scene` with its own dependency folder, and use safe relative paths. Never commit OAuth tokens or provider credentials. Review licence and attribution requirements before distributing meshes, textures or scans.
+
+See [scene pack creation](Scene-pack-creation.md), [`.rdt` format](RDT-pack-format.md) and [cloud security](Cloud-credentials.md).

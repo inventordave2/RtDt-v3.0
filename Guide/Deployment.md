@@ -1,44 +1,46 @@
-# RtDt deployment checklist (GitHub Pages)
+# Deploy and verify the RtDt WebApp
 
-**Target:** `https://inventordave2.github.io/RTDT/webapp.html` from repository `main` / root. This checklist is for the **static browser workbench**, not a Node hosting service.
+RtDt's browser interface is a static HTML/JavaScript site. The repository's published entry point is [RtDt on GitHub Pages](https://inventordave2.github.io/RtDt-v3.0/webapp.html). No Node server is needed to host it.
 
-## Source and publish configuration
+## Local serving
 
-- [ ] Confirm GitHub Pages source is `main` / `/(root)` in repository Settings → Pages.
-- [ ] Confirm `webapp.html` and all referenced `rtdt_*.js` scripts exist and can be requested from the deployed path.
-- [ ] Confirm the deployed commit SHA matches the intended `main` commit; a browser may cache older HTML/scripts.
-- [ ] Serve from an HTTP(S) origin, not a `file://` page for repository asset fetches.
-- [ ] Check the browser DevTools console and Network panel for 404s, missing script errors and MIME/CORS failures.
-
-## Mandatory user-journey checks
-
-- [ ] **Built-in scene:** select Primitives, load, ensure success status, then render an image on the canvas.
-- [ ] **Repository scene:** select Orbit Studio (`samples/orbit.scene`), verify associated `samples/orbit/orbit.phy` is resolved, and render.
-- [ ] **Local scene:** select a local `.scene` and its required OBJ/image/PHY dependencies, then render.
-- [ ] OBJ mesh import and required-asset notices work without leaving the app in a false loaded state.
-- [ ] AetherOre apply-pose and Play/Stop controls behave correctly; playback is frame-by-frame raytracing and may be slow.
-- [ ] Camera and 24-bit RGB point-light settings update an actual scene.
-- [ ] BVH optimisation reports whether subdivisions were created.
-- [ ] Export a rendered PNG, JPEG, **24-bit RGB BMP** and indexed BMP; verify resulting files can be opened.
-- [ ] File / Render / Help menus, About, shortcuts and scene-object selection dialogs open and close correctly.
-- [ ] Canvas stays in the main workspace next to the sidebar at desktop widths; narrow layouts stack appropriately.
-
-## Current risk register
-
-**Open:** a user has reported red scene-load errors and inability to render after a selected scene; this has not yet been verified as fixed through a real-browser smoke test. Treat deploy as unverified until the scene/load/render checks pass.
-
-**Other limitations:** no browser YAML scene import; no area/sphere-light shading; mesh UV albedo supported; no normal/height shading; legacy `raytracer.html`, `raytracer.js` and `raytracer-ui.js` have been removed; CLI `--config` / `--batch` / `--output-dir` and PNG/JPEG/BMP output remain unimplemented.
-
-## Local validation
+From the repository root:
 
 ~~~sh
 python -m http.server 8000
-# open http://localhost:8000/webapp.html
-node cli.js --help
-node tests/scene-expressions.test.js
-node tests/rgb-bmp.test.js
+# Open http://localhost:8000/webapp.html
 ~~~
 
-`npm test` runs four regression suites, not a live browser end-to-end render. These commands are **not a substitute for an actual rendered-image smoke test**.
+Use HTTP(S), not `file://`: repository scene/pack dependencies use fetch. Select the **RtDt repository · featured scenes** collection to load hosted examples, or **RtDt pack (.rdt)** for the hosted pack or a user-selected local pack folder.
 
-If deployment is stale, inspect GitHub Actions/Pages and use a cache-busting query string on `webapp.html`. Do not assume a successful commit means the published WebApp is functional.
+## Publish checklist
+
+- [ ] Confirm the site's source or deployment workflow publishes `webapp.html`, all referenced `rtdt_*.js` files, the sample scene files and assets.
+- [ ] Check the deployed GitHub Pages path, JavaScript requests, content types and browser console for 404/CORS errors.
+- [ ] Load a built-in scene and render a still image.
+- [ ] Load a repository scene with OBJ dependencies; check required asset status and render.
+- [ ] Load the featured Orbit Studio `.rdt` pack; check resolution, animation frame range and ZIP filename.
+- [ ] Select a local pack folder; verify the browser requests only files the user selected and reports missing required dependencies.
+- [ ] Apply an AetherOre `.phy` pose; play and stop an animation; export a short ZIP with `manifest.json`.
+- [ ] Export PNG, JPEG, BMP and PPM stills; inspect dimensions. PNG/PPM use common codecs; browser JPEG is platform-specific.
+- [ ] Check desktop and mobile viewport layout, error messages, export cancellation and UI recovery.
+- [ ] Only when configured, verify OAuth and cloud upload in a test account and the native folder picker on supported browsers.
+
+## Automated verification
+
+~~~sh
+npm install
+npm test
+npm run test:browser
+npm run test:animation:full
+~~~
+
+`npm test` covers core/CLI/pack/animation/cloud mock tests, browser adapters and the benchmark smoke target. `test:browser` is a separate headless Chromium/Playwright test that needs its optional browser dependency installed. The GitHub Actions [feature-verification workflow](../.github/workflows/verify-features.yml) runs Node 20/22, the full 192-frame batch and Chromium smoke tests.
+
+The mock cloud tests are **not** a substitute for live provider sign-in or filesystem permission verification. A successful CI run also does not establish that GitHub Pages has already deployed the same commit.
+
+## Current boundaries
+
+RtDt renders against point lights; sampled area/spherical lighting and normal/bump-map shading are not implemented. The browser is a UI adapter for the shared job renderer, not an independent GPU renderer. The global scene state does not yet support isolated parallel jobs.
+
+For the execution model, see [Architecture](Architecture.md), [render flow](Render-control-flow.md) and the [.rdt pack format](RDT-pack-format.md).

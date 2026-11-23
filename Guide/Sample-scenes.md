@@ -1,16 +1,21 @@
-# Sample scenes
+# RtDt sample scenes and packs
 
-The supported [WebApp](../webapp.html) exposes eight hosted JSON v1 `.scene` files:
+These repository scenes are supported by the declarative loader. Choose a featured scene in [the WebApp](../webapp.html), or pass its path using `node cli.js --scene-file FILE`.
 
-- [Lee Perry-Smith scanned head](../samples/lee-perry-smith-head.scene) — scanned 17,684-triangle OBJ geometry with smooth normals/UVs; the photographic skin map is not yet bundled. [Attribution](../samples/lee-perry-smith-head/LICENSE.txt).
-- [Aurora Orrery](../samples/aurora-orrery.scene) — detailed original celestial scene and orbital ring OBJ meshes.
-- [Rocket to Rainbow Planet](../samples/rocket-to-rainbow-planet.scene) — OBJ rocket parts.
-- [Orbit Studio](../samples/orbit.scene) — includes [AetherOre animation](../samples/orbit/orbit.phy).
-- [Prism Garden](../samples/prism-garden.scene)
-- [Cosmic Orbs](../samples/cosmic-orbs.scene)
-- [Neon City](../samples/neon-city.scene)
-- [Reflection Studio](../samples/reflection-studio.scene)
+| Scene | File | Notes |
+| --- | --- | --- |
+| Orbit Studio | [orbit.scene](../samples/orbit.scene) | Primitives and [AetherOre `.phy`](../samples/orbit/orbit-formula.phy); [192-frame `.rdt` pack](../samples/orbit.rdt) |
+| Prism Garden | [prism-garden.scene](../samples/prism-garden.scene) | Reflective primitives |
+| Cosmic Orbs | [cosmic-orbs.scene](../samples/cosmic-orbs.scene) | Celestial objects |
+| Neon City | [neon-city.scene](../samples/neon-city.scene) | Buildings and reflective ground |
+| Reflection Studio | [reflection-studio.scene](../samples/reflection-studio.scene) | Reflection and materials |
+| Rocket to Rainbow Planet | [rocket-to-rainbow-planet.scene](../samples/rocket-to-rainbow-planet.scene) | Rocket OBJ geometry |
+| Aurora Orrery | [aurora-orrery.scene](../samples/aurora-orrery.scene) | Orbital-ring OBJ meshes |
+| Beetle Psychedelia | [vw-beetle-psychedelia.scene](../samples/vw-beetle-psychedelia.scene) | Car scene with private assets |
+| Lee Perry-Smith head | [lee-perry-smith-head.scene](../samples/lee-perry-smith-head.scene) | UV/smooth-normal geometry; original photographic skin texture not bundled; [CC BY 3.0 attribution](../samples/lee-perry-smith-head/LICENSE.txt) |
 
-A scene named `name.scene` keeps private assets in `name/` and references them as `name/model.obj`, relative to the `.scene` file. Truly shared sample-pack files go in `shared/`. Root [obj/](../obj) and [img/](../img) hold standalone bundled assets, not scene-pack dependencies.
+A JSON/YAML scene example is also available at [orbit-yaml.scene.yaml](../samples/orbit-yaml.scene.yaml). The experimental procedural YAML language in `rtdt_scene_loader.js` is not equivalent to the supported declarative subset.
 
-See [creating a scene pack](Scene-pack-creation.md). The experimental `examples/*.scene.yaml` files are not supported browser scene packs.
+Scene-private assets normally live in a matching directory under `samples/`, e.g. `samples/rocket-to-rainbow-planet/`. Paths in each `.scene` are scene-relative. For a whole render job, prefer a [`.rdt` pack](RDT-pack-format.md).
+
+Small previews are recommended for high-triangle meshes. See [scene creation](Scene-pack-creation.md).

@@ -1,23 +1,31 @@
-# RtDt coding style
+# RtDt source coding conventions
 
-This document records the project's preferred style for future changes and the planned manual refactor pass. It does **not** assert that all existing source files conform yet.
+These rules apply to source code and code examples, **not** to README or other prose documentation. They govern new code and changes to existing code; legacy files may still contain violations.
 
-## Function body spacing
+- Functions use **snake_case**.
+- Constructors alone use **PascalCase**.
+- Variables use **camelCase**.
+- Constants use **UPPER_SNAKE_CASE**.
+- New JavaScript filenames follow **`rtdt_snake_case.js`**.
+- When renaming a definition, update every call site and reference consistently.
+- Every source line that ends with an opening `{` must be followed immediately by a **blank line**, including functions, loops and conditionals.
 
-After the opening `{` of a function definition, include a **blank whitespace-only line** before the first statement. A function body therefore begins with the opening brace, then a newline, then a blank indented line, then the first statement.
+For example:
 
-Preferred:
+~~~javascript
+const MAX_FRAME_COUNT = 192;
 
-```javascript
-function trace_ray(world, ray) {
+function render_frame(frameIndex) {
 
-    const intersections = intersect_world(world, ray);
-    return hit(intersections);
+    if (frameIndex >= MAX_FRAME_COUNT) {
+
+        throw new Error('Frame is out of range');
+    }
+
+    return frameIndex;
 }
-```
+~~~
 
-This rule applies to function declarations, function expressions, methods and callbacks when formatted as multiline bodies. Keep the intervening line empty of comments and statements. In newly written or modified functions, follow this convention; do not churn unrelated files purely to enforce it.
+Keep the Node CLI and WebApp thin. Raytracing, scene construction, job execution, animation, output transformation and validation rules belong in shared modules where practical; only filesystem, browser display, permissions and authentication should need platform adapters.
 
-## Refactor considerations
-
-Preserve observable behaviour when reformatting. Perform function-structure changes separately from algorithm changes, and run `npm test` plus the CLI render verification after changes. The browser and CLI currently have separate scanline render loops.
+Run `npm test`, `npm run test:animation:full` and, for browser integration changes, `npm run test:browser` after relevant code changes. See [Architecture](Architecture.md).
