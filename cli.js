@@ -423,8 +423,13 @@ function configure_job() {
         throw new Error('Invalid .rdt pack: '+report.errors.join('; '));
     var pack = report.pack;
     var base = path.dirname(path.resolve(cliConfig.jobFile));
-    cliConfig.sceneFile = path.join(base,pack.scene);
-    cliConfig.phyFile = pack.phy ? path.join(base,pack.phy) : null;
+    cliConfig.sceneFile = report.resolved['scene:'+pack.scene] || path.join(base,pack.scene);
+    cliConfig.assetRegistryRoots = (pack.registries||[]).map(function(root) {
+
+        return path.join(base,root);
+    });
+    cliConfig.phyFile = pack.phy ?
+        (report.resolved['animation:'+pack.phy] || path.join(base,pack.phy)) : null;
     cliConfig.width = pack.render.width;
     cliConfig.height = pack.render.height;
     cliConfig.quality = pack.render.quality;
@@ -481,7 +486,8 @@ async function renderScene() {
             const sceneFile = path.resolve(cliConfig.sceneFile);
             const model = rtdt_scene_browser.parse(fs.readFileSync(sceneFile,'utf8'));
             const resolved = sceneAssetNode.resolve(
-                model,sceneFile,repoRoot,rtdt_scene_assets,rtdt_image_io_browser);
+                model,sceneFile,repoRoot,rtdt_scene_assets,rtdt_image_io_browser,
+                cliConfig.assetRegistryRoots || []);
             rtdt_scene_browser.load(model,WIDTH,HEIGHT,resolved);
             for (const entry of resolved.entries) {
 
