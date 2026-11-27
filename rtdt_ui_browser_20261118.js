@@ -561,15 +561,8 @@ var rtdt_ui_browser = (function () {
             if(folderRegistry&&selected) {
 
                 chosen=folderRegistry.entries[selected].file;
-                var localFiles=Object.keys(folderRegistry.entries).map(function(path) {
-
-                    var original=folderRegistry.entries[path].file;
-                    var alias=new File([original],original.name,{type:original.type});
-                    Object.defineProperty(alias,'webkitRelativePath',{
-                        value:path,configurable:true
-                    });
-                    return alias;
-                });
+                var localFiles=Array.prototype.slice.call(
+                    element('sceneLocalFolder').files||[]);
                 promise=rtdt_scene_assets.read_text(chosen).then(function(text) {
 
                     return use_scene_source(text,selected,localFiles);
