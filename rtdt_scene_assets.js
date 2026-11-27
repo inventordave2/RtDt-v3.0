@@ -65,14 +65,22 @@ var rtdt_scene_assets = (function () {
     function acquire(asset,scenePath,localFiles) {
         var path=check_path(asset.path), ext=asset.kind==='image';
         if (localFiles !== null) {
-            var file=null, matches=[];
+            var file=null, exact=[], byName=[];
+            var relative=repo_path(path,scenePath);
             for (var i=0;i<localFiles.length;i++) {
+
                 var candidate=localFiles[i];
-                if (candidate.webkitRelativePath===path || candidate.name===path ||
-                    candidate.name===path.split('/').pop()) matches.push(candidate);
+                var candidatePath=String(candidate.webkitRelativePath||'');
+                if(candidatePath===relative || candidatePath===path ||
+                    (candidatePath && candidatePath.endsWith('/'+relative)))
+                    exact.push(candidate);
+                else if(candidate.name===path.split('/').pop())
+                    byName.push(candidate);
             }
-            if (matches.length !== 1)
-                return Promise.reject(new Error(matches.length ? 'Ambiguous local asset: '+path :
+            var matches=exact.length ? exact : byName;
+            if(matches.length!==1)
+                return Promise.reject(new Error(matches.length ?
+                    'Ambiguous local asset: '+path :
                     'Select required local file: '+path));
             file=matches[0];
             return ext ? decode_image(file) : read_text(file);
