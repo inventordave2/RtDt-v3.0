@@ -4,7 +4,7 @@
 var rtdt_pack = (function () {
 
     var MAX_SOURCE_BYTES = 262144;
-    var TOP_LEVEL = ['version','name','scene','phy','assets','render','output'];
+    var TOP_LEVEL = ['version','name','scene','phy','assets','registries','render','output'];
     var ASSET_KINDS = ['mesh','texture','animation'];
     var DESTINATIONS = ['file','zip','folder','google-drive','dropbox','onedrive'];
 
@@ -111,6 +111,19 @@ var rtdt_pack = (function () {
             return {kind:asset.kind,path:assetPath,required:asset.required !== false};
         });
 
+        var registries=model.registries===undefined ? [] : model.registries;
+        if(!Array.isArray(registries)||registries.length>16)
+            throw new Error('registries must be an array of up to 16 relative directories');
+        var registrySeen=Object.create(null);
+        registries=registries.map(function(root) {
+
+            var dir=safe_path(root,'registry');
+            if(registrySeen[dir])
+                throw new Error('Duplicate registry directory: '+dir);
+            registrySeen[dir]=true;
+            return dir;
+        });
+
         var render = model.render === undefined ? {} : model.render;
         if (!is_object(render)) throw new Error('Pack render must be an object');
         known_keys(render,['width','height','quality','fps','frames'],'render');
@@ -168,7 +181,7 @@ var rtdt_pack = (function () {
                 throw new Error('Output filename extension must match output.format');
         }
         return {version:1,name:model.name || undefined,scene:scene,phy:phy,
-            assets:references,render:{width:width,height:height,quality:quality,
+            assets:references,registries:registries,render:{width:width,height:height,quality:quality,
                 fps:fps,frames:frames},
             output:{destination:destination,path:outputPath,format:format}};
     }
