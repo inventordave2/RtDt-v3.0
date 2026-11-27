@@ -47,6 +47,21 @@ function check_parser() {
     assert.equal(minimal.render.height,281);
     assert.equal(minimal.render.quality,1);
 
+    const withDefaults = rtdt_pack.parse(JSON.stringify({
+        version:1,scene:'main.scene',
+        registries:['specific','shared'],
+        defaultRegistries:['shared','bundled']
+    }));
+    assert.deepEqual(withDefaults.registries,['specific','shared','bundled']);
+    assert.deepEqual(withDefaults.defaultRegistries,['shared','bundled']);
+    assert.deepEqual(rtdt_pack.validate(withDefaults),withDefaults);
+    expect_invalid({version:1,scene:'main.scene',
+        defaultRegistries:['../outside']},/Unsafe/);
+    expect_invalid({version:1,scene:'main.scene',
+        defaultRegistries:['shared','shared']},/Duplicate/);
+    expect_invalid({version:1,scene:'main.scene',
+        defaultRegistries:'shared'},/array/);
+
     assert.throws(function () {
 
         rtdt_pack.parse('{version:1}');
@@ -134,6 +149,24 @@ function check_linter() {
 
             return /optional.png/.test(message);
         }));
+
+        // Default registry should resolve scene dependencies without changing the scene.
+        fs.mkdirSync(path.join(workDir,'bundled'),{recursive:true});
+        fs.renameSync(meshFile,path.join(workDir,'bundled','simple.obj'));
+        write_json(sceneFile,{version:1,objects:[
+            {type:'mesh',mesh:'simple.obj'}
+        ]});
+        manifest.assets = [];
+        manifest.defaultRegistries = ['bundled'];
+        write_json(packFile,manifest);
+        report = rtdt_pack_lint_node.lint_file(packFile);
+        assert.equal(report.valid,true,JSON.stringify(report.errors));
+        assert.ok(report.checked.includes('bundled/simple.obj'));
+        delete manifest.defaultRegistries;
+        fs.renameSync(path.join(workDir,'bundled','simple.obj'),meshFile);
+        write_json(sceneFile,{version:1,objects:[
+            {type:'mesh',mesh:'models/simple.obj'}
+        ]});
 
         manifest.assets = [];
         write_json(packFile,manifest);
