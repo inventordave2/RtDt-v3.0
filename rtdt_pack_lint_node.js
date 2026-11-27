@@ -15,6 +15,8 @@ function inside_directory(root,filename) {
 function lint_file(filename) {
 
     const errors = [], warnings = [], checked = new Set();
+    const resolvedPaths = Object.create(null);
+    let registryRoots = [];
     const packFile = path.resolve(filename);
     const root = path.dirname(packFile);
 
@@ -34,17 +36,18 @@ function lint_file(filename) {
             add_issue(errors,error.message+' ('+reference+')');
             return null;
         }
-        const absolute = path.resolve(baseDir,relative);
-        if (!inside_directory(root,absolute)) {
+        const candidates=[path.resolve(baseDir,relative)];
+        for(const registryRoot of registryRoots)
+            candidates.push(path.resolve(root,registryRoot,relative));
+        const absolute=candidates.find(function(candidate) {
 
-            add_issue(errors,'Asset escapes pack directory: '+reference);
-            return null;
-        }
-        if (!fs.existsSync(absolute)) {
+            return inside_directory(root,candidate) && fs.existsSync(candidate);
+        });
+        if(!absolute) {
 
             add_issue(required ? errors : warnings,
-                (required ? 'Required' : 'Optional')+' '+kind+' file not found: '+
-                path.relative(root,absolute));
+                (required ? 'Required' : 'Optional')+' '+kind+
+                ' file not found in pack or registries: '+reference);
             return null;
         }
         const realRoot = fs.realpathSync(root);
@@ -60,6 +63,7 @@ function lint_file(filename) {
             return null;
         }
         checked.add(path.relative(root,absolute).replace(/\\/g,'/'));
+        resolvedPaths[kind+':'+reference]=absolute;
         return absolute;
     }
 
@@ -86,6 +90,7 @@ function lint_file(filename) {
         if (!/\.rdt$/i.test(packFile))
             throw new Error('Pack filename must end with .rdt');
         pack = rtdt_pack.parse(source);
+        registryRoots=pack.registries || [];
         const sceneFile = check_reference(pack.scene,'scene',true,root);
         const phyFile = pack.phy ?
             check_reference(pack.phy,'animation',true,root) : null;
@@ -151,7 +156,7 @@ function lint_file(filename) {
         add_issue(errors,error.message);
     }
     return {valid:errors.length === 0,pack:pack,errors:errors,
-        warnings:warnings,checked:Array.from(checked).sort()};
+        warnings:warnings,checked:Array.from(checked).sort(),resolved:resolvedPaths};
 }
 
 function print_report(filename) {
