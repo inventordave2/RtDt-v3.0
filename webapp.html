@@ -891,8 +891,8 @@
                         <option value="reflection-studio" data-scene-path="samples/reflection-studio.scene">Reflection Studio · reflection-studio.scene</option>
                     </select>
                 </div>
-                <div id="sceneLocalGroup" class="control-group" style="display:none">
-                    <label for="sceneLocalFile">Your .scene file (JSON or YAML)</label>
+                <div id="sceneLocalGroup" class="control-group" style="display:none">\n                    <label for="sceneLocalFolder">Asset folder (index all files)</label>\n                    <input type="file" id="sceneLocalFolder" webkitdirectory directory multiple>\n                    <p id="sceneRegistryStatus" class="rtdt-caption" role="status" aria-live="polite">Choose a folder to index scenes, meshes, textures and animations locally.</p>\n                    <label for="sceneFolderSelect">Scene from indexed folder</label>\n                    <select id="sceneFolderSelect" disabled><option value="">Choose a folder first</option></select>
+                    <label for="sceneLocalFile">Or select a single .scene file (JSON or YAML)</label>
                     <input type="file" id="sceneLocalFile" accept=".scene,.yaml,.yml"><div id="sceneLocalFileName" class="rtdt-selected-filename" role="status" aria-live="polite">No scene file selected</div>
                     <label for="sceneLocalAssets">Associated files (OBJ, texture, .phy)</label>
                     <input type="file" id="sceneLocalAssets" multiple accept=".obj,.phy,.png,.jpg,.jpeg,.bmp,.ppm"><div id="sceneLocalAssetsName" class="rtdt-selected-filename" role="status" aria-live="polite">No asset files selected</div>
@@ -1208,7 +1208,7 @@
 <script src="rtdt_flightpath.js"></script>
 <script src="rtdt_mandelbrot.js"></script>
 <script src="rtdt_metal_surfaces.js"></script>
-<script src="rtdt_scene_assets.js"></script>
+<script src="rtdt_asset_registry.js"></script>\n<script src="rtdt_scene_assets.js"></script>
 <script src="rtdt_scene_format.js"></script>
 <script src="rtdt_scene_browser.js"></script>
 <script src="rtdt_pack.js"></script>
