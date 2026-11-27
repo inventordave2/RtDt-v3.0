@@ -71,6 +71,7 @@ RtDt Pack v1 is a **JSON object** with these exact top-level keys:
 | `scene` | relative path | Yes | `.scene`, `.scene.yaml` or `.scene.yml` |
 | `phy` | relative path | No | Optional AetherOre `.phy` file |
 | `assets` | array | No | Additional dependencies, up to 200 entries |
+| `registries` | array | No | Default pack-relative asset directories, searched in order |
 | `render` | object | No | Resolution, quality, FPS and optional frame range |
 | `output` | object | No | Image format and file/folder/cloud destination |
 
@@ -94,6 +95,42 @@ and `.phy` for animation.
 Assets already declared in the `.scene` file do not need to be duplicated
 in the `.rdt` manifest. They remain **relative to their containing scene
 file**. Pack-level assets are relative to the `.rdt` file itself.
+
+### Default asset registries
+
+Optionally declare directories containing shared scenes, meshes, textures or
+animations. These are **relative to the directory containing the .rdt file**.
+
+```json
+{
+  "version": 1,
+  "scene": "studio.scene",
+  "registries": ["assets", "shared/materials"],
+  "render": {"width": 800, "height": 450},
+  "output": {"destination": "file", "path": "render.png"}
+}
+```
+
+RtDt first tries a reference in its ordinary location (scene-relative for
+scene dependencies, pack-relative for pack dependencies). If the file is
+missing, it searches each configured registry directory in the declared order.
+For example, `studio.scene` can refer to `rocket.obj`; the loader tries
+`rocket.obj` beside the scene, then `assets/rocket.obj`, then
+`shared/materials/rocket.obj`. Duplicate basenames in different folders are
+not a problem when a path resolves exactly.
+
+`registries` is an array of at most 16 unique directory names.
+Directories must be relative, use forward slashes, and must not contain
+`..`, absolute paths or URLs. Absent `registries` means no fallback.
+A registry is a path-search configuration, **not** an executable plugin list.
+Only referenced files are read; registry directories are not recursively
+loaded or executed. Node uses the same fallback search during CLI execution
+and pack linting.
+
+In the WebApp, selecting a local folder automatically indexes its files,
+retaining in-memory `File` references and relative names. Selecting a
+folder does not upload its contents. Hosted packs search the same directory
+paths on their static host; those files must actually be deployed there.
 
 ### Render block
 
