@@ -80,7 +80,7 @@ var rtdt_pack_browser = (function () {
         }
 
         var sceneResult=await find_file(pack.scene,'scene',
-            location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,''));
+            location(manifestPath,'placeholder.scene').slice(0,-'placeholder.scene'.length));
         var scenePath=sceneResult.path;
         var sceneText=await rtdt_scene_assets.read_text(sceneResult.file);
         var sceneModel = rtdt_scene_browser.parse(sceneText);
@@ -88,7 +88,7 @@ var rtdt_pack_browser = (function () {
         async function inspect(reference,kind,required,relativeToScene) {
 
             var baseDir=relativeToScene ? sceneDir :
-                location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,'');
+                location(manifestPath,'placeholder.scene').slice(0,-'placeholder.scene'.length);
             var requested=rtdt_scene_assets.check_path(reference);
             try {
 
@@ -118,7 +118,7 @@ var rtdt_pack_browser = (function () {
         if (pack.phy) {
 
             var motion=await find_file(pack.phy,'animation',
-                location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,''));
+                location(manifestPath,'placeholder.scene').slice(0,-'placeholder.scene'.length));
             phyText=await rtdt_scene_assets.read_text(motion.file);
         }
         return {pack:pack,sceneText:sceneText,scenePath:scenePath,
