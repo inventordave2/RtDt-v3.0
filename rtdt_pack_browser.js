@@ -54,26 +54,51 @@ var rtdt_pack_browser = (function () {
     async function resolve_pack(source,manifestPath,get_text,get_file,make_alias) {
 
         var pack = rtdt_pack.parse(source);
-        var scenePath = location(manifestPath,pack.scene);
-        var sceneText = await get_text(scenePath);
-        var sceneModel = rtdt_scene_browser.parse(sceneText);
-        var sceneDir = scenePath.slice(0,scenePath.lastIndexOf('/')+1);
         var warnings = [], aliases = [];
 
+        async function find_file(reference,kind,baseDir) {
+
+            var candidates=[baseDir+reference];
+            (pack.registries||[]).forEach(function(root) {
+
+                candidates.push(location(manifestPath,root+'/'+reference));
+            });
+            var lastError=null;
+            for(var candidateIndex=0;candidateIndex<candidates.length;candidateIndex++) {
+
+                try {
+
+                    return {path:candidates[candidateIndex],
+                        file:await get_file(candidates[candidateIndex],kind)};
+                } catch(error) {
+
+                    lastError=error;
+                }
+            }
+            throw new Error('Cannot find '+kind+' '+reference+
+                ' in pack or registry directories: '+(lastError&&lastError.message));
+        }
+
+        var sceneResult=await find_file(pack.scene,'scene',
+            location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,''));
+        var scenePath=sceneResult.path;
+        var sceneText=await rtdt_scene_assets.read_text(sceneResult.file);
+        var sceneModel = rtdt_scene_browser.parse(sceneText);
+        var sceneDir = scenePath.slice(0,scenePath.lastIndexOf('/')+1);
         async function inspect(reference,kind,required,relativeToScene) {
 
-            var resolved = relativeToScene ?
-                sceneDir + rtdt_scene_assets.check_path(reference) :
-                location(manifestPath,reference);
+            var baseDir=relativeToScene ? sceneDir :
+                location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,'');
+            var requested=rtdt_scene_assets.check_path(reference);
             try {
 
-                var file = await get_file(resolved,kind);
-                if (relativeToScene && make_alias)
-                    aliases.push(make_alias(file,reference));
-            } catch (error) {
+                var result=await find_file(requested,kind,baseDir);
+                if(relativeToScene&&make_alias)
+                    aliases.push(make_alias(result.file,reference));
+            } catch(error) {
 
-                if (required) throw new Error('Required '+kind+' '+resolved+': '+error.message);
-                warnings.push('Optional '+kind+' not available: '+resolved);
+                if(required)throw new Error('Required '+kind+' '+reference+': '+error.message);
+                warnings.push('Optional '+kind+' not available: '+reference);
             }
         }
 
@@ -90,8 +115,12 @@ var rtdt_pack_browser = (function () {
             await inspect(asset.path,asset.kind,asset.required,true);
         }
         var phyText = null;
-        if (pack.phy)
-            phyText = await get_text(location(manifestPath,pack.phy));
+        if (pack.phy) {
+
+            var motion=await find_file(pack.phy,'animation',
+                location(manifestPath,'placeholder.scene').replace(/placeholder\\.scene$/,''));
+            phyText=await rtdt_scene_assets.read_text(motion.file);
+        }
         return {pack:pack,sceneText:sceneText,scenePath:scenePath,
             phyText:phyText,localFiles:make_alias ? aliases : undefined,
             warnings:warnings};
@@ -102,34 +131,36 @@ var rtdt_pack_browser = (function () {
         var pathname = rtdt_pack.safe_path(packPath,'hosted pack');
         if (!/\.rdt$/i.test(pathname))
             throw new Error('Expected a .rdt pack manifest');
-        async function fetch_data(filename,kind) {
+        async function fetch_file(filename) {
 
-            var response = await fetch(filename,{cache:'no-store'});
-            if (!response.ok)
-                throw new Error('HTTP '+response.status);
-            return kind === 'image' || kind === 'texture' ?
-                response.blob() : response.text();
+            var response=await fetch(filename,{cache:'no-store'});
+            if(!response.ok)throw new Error('HTTP '+response.status+' '+filename);
+            var blob=await response.blob();
+            return new File([blob],filename.split('/').pop(),{type:blob.type});
         }
-        return resolve_pack(await fetch_data(pathname),pathname,
-            async function (name) {
+        var manifest=await fetch_file(pathname);
+        var source=await rtdt_scene_assets.read_text(manifest);
+        function alias(file,reference) {
 
-                return fetch_data(name);
-            },
-            async function (name,kind) {
-
-                return fetch_data(name,kind);
-            },null);
+            var copy=new File([file],file.name,{type:file.type});
+            Object.defineProperty(copy,'webkitRelativePath',{
+                value:reference,configurable:true
+            });
+            return copy;
+        }
+        return resolve_pack(source,pathname,null,fetch_file,alias);
     }
 
     async function load_local(files) {
 
-        var entries = directory_entries(files);
-        var manifestName = find_root_manifest(entries);
+        var registry=rtdt_asset_registry.index(files);
+        var entries=registry.entries;
+        var manifestName=find_root_manifest(entries);
         async function get_file(filename) {
 
-            var file = entries[filename];
-            if (!file) throw new Error('File missing from selected directory');
-            return file;
+            var entry=entries[filename];
+            if(!entry)throw new Error('File missing from selected directory: '+filename);
+            return entry.file;
         }
         async function get_text(filename) {
 
