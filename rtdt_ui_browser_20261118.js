@@ -25,6 +25,7 @@ var rtdt_ui_browser = (function () {
     var packZipFilename = null;
     var packStillFilename = null;
     var cameraPath = null;
+    var folderRegistry = null;
 
     function viewport_meta(message) {
         var node = element('viewportMeta');
@@ -482,6 +483,40 @@ var rtdt_ui_browser = (function () {
         }
     }
 
+    function index_scene_folder() {
+
+        var input=element('sceneLocalFolder'),select=element('sceneFolderSelect');
+        folderRegistry=null;
+        select.textContent='';
+        select.disabled=true;
+        try {
+
+            var registry=rtdt_asset_registry.index(input.files);
+            if(!registry.count)throw new Error('The selected folder is empty.');
+            folderRegistry=registry;
+            var paths=Object.keys(registry.entries).filter(function(path) {
+
+                return registry.entries[path].type==='scene';
+            }).sort();
+            if(!paths.length)throw new Error('No .scene or .scene.yaml file found.');
+            paths.forEach(function(path) {
+
+                var option=document.createElement('option');
+                option.value=path;
+                option.textContent=path;
+                select.appendChild(option);
+            });
+            select.disabled=false;
+            element('sceneRegistryStatus').textContent=registry.count+
+                ' files indexed, '+paths.length+' scenes, '+
+                (registry.count-paths.length)+' support files. No files uploaded.';
+        } catch(error) {
+
+            folderRegistry=null;
+            element('sceneRegistryStatus').textContent=error.message;
+        }
+    }
+
     function load_selected_scene() {
         var source = element('sceneSource').value;
         if (source === 'built-in') { load_scene(); return Promise.resolve(scene_loaded); }
@@ -520,15 +555,38 @@ var rtdt_ui_browser = (function () {
                 return response.text();
             }).then(function(text) { return use_scene_source(text,scenePath); });
         } else {
+
             var chosen=element('sceneLocalFile').files[0];
-            if (!chosen) {
-                status('sceneStatus','Choose a .scene file from your computer.','error');
-                return Promise.resolve(false);
+            var selected=element('sceneFolderSelect').value;
+            if(folderRegistry&&selected) {
+
+                chosen=folderRegistry.entries[selected].file;
+                var localFiles=Object.keys(folderRegistry.entries).map(function(path) {
+
+                    var original=folderRegistry.entries[path].file;
+                    var alias=new File([original],original.name,{type:original.type});
+                    Object.defineProperty(alias,'webkitRelativePath',{
+                        value:path,configurable:true
+                    });
+                    return alias;
+                });
+                promise=rtdt_scene_assets.read_text(chosen).then(function(text) {
+
+                    return use_scene_source(text,selected,localFiles);
+                });
+            } else {
+
+                if(!chosen) {
+
+                    status('sceneStatus','Choose an asset folder or a .scene file.','error');
+                    return Promise.resolve(false);
+                }
+                var associated=Array.prototype.slice.call(element('sceneLocalAssets').files||[]);
+                promise=rtdt_scene_assets.read_text(chosen).then(function(text) {
+
+                    return use_scene_source(text,chosen.name,associated);
+                });
             }
-            var localFiles=Array.prototype.slice.call(element('sceneLocalAssets').files||[]);
-            promise=rtdt_scene_assets.read_text(chosen).then(function(text) {
-                return use_scene_source(text,chosen.name,localFiles);
-            });
         }
         return promise.then(function (ok) {
             status('sceneStatus', ok ? 'Scene loaded. Check the asset list below.' :
@@ -1597,6 +1655,7 @@ var rtdt_ui_browser = (function () {
         set_scene_source();
         bind('btnLoadScene', 'click', load_selected_scene);
         bind('sceneSource', 'change', set_scene_source);
+        bind('sceneLocalFolder','change',index_scene_folder);
         bind('packSource','change',set_pack_source);
         set_pack_source();
         bind('btnAssetMesh', 'click', function () { open_import('obj', element('assetDefaultSource').value); });
