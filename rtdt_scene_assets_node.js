@@ -84,7 +84,7 @@ function decode_image(filename, imageIO) {
     throw new Error('Unsupported texture format: ' + ext);
 }
 
-function resolve(model, sceneFile, repoRoot, assetLibrary, imageIO) {
+function resolve(model, sceneFile, repoRoot, assetLibrary, imageIO, registryRoots) {
 
     const entries = assetLibrary.definitions(model);
     const available = {};
@@ -105,10 +105,30 @@ function resolve(model, sceneFile, repoRoot, assetLibrary, imageIO) {
             if (!cache.has(key)) {
 
                 const relativeAsset = assetLibrary.repo_path(entry.path,scenePath);
-                const absolute = path.resolve(base,relativeAsset);
-                const relative = path.relative(base,absolute);
+                const preferred=path.resolve(base,relativeAsset);
+                const relative = path.relative(base,preferred);
                 if (relative.startsWith('..') || path.isAbsolute(relative))
                     throw new Error('Asset escapes scene root: ' + entry.path);
+                const candidates=[preferred];
+                (registryRoots||[]).forEach(function(root) {
+
+                    candidates.push(path.resolve(root,entry.path));
+                });
+                const absolute=candidates.find(function(filename) {
+
+                    return fs.existsSync(filename) && fs.statSync(filename).isFile();
+                }) || preferred;
+                if(absolute!==preferred) {
+
+                    const registryRoot=(registryRoots||[]).find(function(root) {
+
+                        const rel=path.relative(root,absolute);
+                        return rel!==''&&!rel.startsWith('..')&&!path.isAbsolute(rel);
+                    });
+                    if(!registryRoot ||
+                        !fs.realpathSync(absolute).startsWith(fs.realpathSync(registryRoot)+path.sep))
+                        throw new Error('Registry asset escapes declared directory: '+entry.path);
+                }
                 const data = entry.kind === 'image' ? decode_image(absolute,imageIO) :
                     fs.readFileSync(absolute,'utf8');
                 cache.set(key,entry.kind === 'obj' ? assetLibrary.parse_obj(data) : data);
