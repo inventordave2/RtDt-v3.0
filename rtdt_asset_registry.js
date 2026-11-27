@@ -27,8 +27,8 @@ var rtdt_asset_registry = (function () {
     function file_type(path) {
 
         var lower=path.toLowerCase();
-        if(/\\.scene(?:\\.ya?ml)?$/.test(lower))return 'scene';
-        var match=/\\.[a-z0-9]+$/.exec(lower);
+        if(/\.scene(?:\.ya?ml)?$/.test(lower))return 'scene';
+        var match=/\.[a-z0-9]+$/.exec(lower);
         return match ? TYPES[match[0]]||'other' : 'other';
     }
 
