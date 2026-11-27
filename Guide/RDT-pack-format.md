@@ -71,6 +71,8 @@ RtDt Pack v1 is a **JSON object** with these exact top-level keys:
 | `scene` | relative path | Yes | `.scene`, `.scene.yaml` or `.scene.yml` |
 | `phy` | relative path | No | Optional AetherOre `.phy` file |
 | `assets` | array | No | Additional dependencies, up to 200 entries |
+| `registries` | array | No | Explicit pack-relative search directories, up to 16 |
+| `defaultRegistries` | array | No | Fallback pack-relative search directories, up to 16 |
 | `render` | object | No | Resolution, quality, FPS and optional frame range |
 | `output` | object | No | Image format and file/folder/cloud destination |
 
@@ -94,6 +96,24 @@ and `.phy` for animation.
 Assets already declared in the `.scene` file do not need to be duplicated
 in the `.rdt` manifest. They remain **relative to their containing scene
 file**. Pack-level assets are relative to the `.rdt` file itself.
+
+### Default asset registries
+
+A pack can define directories searched when a referenced scene, mesh, texture or animation is not found at its normal relative location:
+
+```json
+{
+  "version": 1,
+  "scene": "orbit.scene",
+  "registries": ["project-assets"],
+  "defaultRegistries": ["assets/shared", "assets/bundled"],
+  "output": {"destination": "file", "path": "orbit.png", "format": "png"}
+}
+```
+
+Resolution checks the original scene-relative (or pack-relative) reference first, then the roots in `registries` in order, then the roots in `defaultRegistries` in order. The first existing file is used. Duplicate roots across the two arrays are searched only once. All registry roots must be safe relative directories **inside the selected pack folder**; absolute paths, `..` traversal and URL roots are not accepted. The browser can only use files explicitly provided by the folder selector or hosted with the pack. There is no implicit access to arbitrary local folders or remote sites.
+
+`defaultRegistries` is optional, so existing .rdt packs keep their previous behaviour. This is a fallback search facility, not a mechanism for replacing asset declarations in `.scene` files.
 
 ### Render block
 
