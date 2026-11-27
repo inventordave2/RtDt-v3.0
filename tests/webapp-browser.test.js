@@ -280,6 +280,42 @@ async function main() {
             fs.readFileSync(path.join(folder,'out','still-from-pack.png')),
             'CLI and WebApp pack still PNGs must match byte-for-byte');
 
+        // Index a user-selected asset folder, preserving scene-relative paths.
+        const registryFolder=path.join(temp,'indexed-scene');
+        fs.mkdirSync(path.join(registryFolder,'assets'),{recursive:true});
+        fs.writeFileSync(path.join(registryFolder,'assets','model.obj'),
+            'v 0 0 0\\nv 1 0 0\\nv 0 1 0\\nf 1 2 3\\n'.replace(/\\n/g,'\n'));
+        fs.writeFileSync(path.join(registryFolder,'assets','studio.scene'),
+            JSON.stringify({version:1,objects:[{type:'mesh',mesh:'model.obj'}]}));
+        fs.writeFileSync(path.join(registryFolder,'studio.rdt'),
+            JSON.stringify({version:1,name:'Registry-backed pack',
+                scene:'studio.scene',registries:['assets'],
+                render:{width:12,height:10,quality:1},
+                output:{destination:'file',path:'registry.png',format:'png'}}));
+        await page.selectOption('#sceneSource','local');
+        await page.locator('#sceneLocalFolder').setInputFiles(registryFolder);
+        assert.match(await page.locator('#sceneRegistryStatus').innerText(),/3 files indexed/);
+        await page.selectOption('#sceneFolderSelect','assets/studio.scene');
+        await page.locator('#btnLoadScene').click();
+        await page.waitForFunction(function () {
+
+            return /Scene ready|Scene failed/.test(
+                document.querySelector('#sceneStatus').textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#sceneStatus').innerText(),/Scene ready/);
+
+        // RDT default registry paths resolve the same asset folder automatically.
+        await page.selectOption('#sceneSource','pack');
+        await page.selectOption('#packSource','local');
+        await page.locator('#packLocalFiles').setInputFiles(registryFolder);
+        await page.locator('#btnLoadScene').click();
+        await page.waitForFunction(function () {
+
+            return /Registry-backed pack|Pack failed/.test(
+                document.querySelector('#packStatus').textContent);
+        },null,{timeout:60000});
+        assert.match(await page.locator('#packStatus').innerText(),/Registry-backed pack/);
+
         // Exercise the camera dialogue against the shared flightpath sampler.
         await page.locator('#btnOpenCamera').click();
         await page.locator('#cameraModal').waitFor({state:'visible'});
